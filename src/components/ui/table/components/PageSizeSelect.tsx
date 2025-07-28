@@ -32,7 +32,8 @@ const PageSizeSelect: React.FC<PageSizeSelectProps> = ({
       <select
         value={displayValue()}
         onChange={(e) => onChange(Number(e.target.value))}
-        className={`bg-gray-800 border p-1 rounded outline-none border-gray-500 h-9 ${className}`}
+        className={`bg-gray-800 border p-1 rounded outline-none border-gray-500 h-9 ${className} cursor-not-allowed`}
+        disabled={true}
       >
         {options.map((size) => (
           <option key={size} value={size}>

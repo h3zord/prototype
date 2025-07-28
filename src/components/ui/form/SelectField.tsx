@@ -20,6 +20,7 @@ interface SelectFieldProps {
   defaultValue?: OptionType | null;
   value?: OptionType | null;
   warning?: string;
+  placeholder?: string;
 }
 
 const SelectField: React.FC<SelectFieldProps> = ({
@@ -32,6 +33,7 @@ const SelectField: React.FC<SelectFieldProps> = ({
   disabled = false,
   loading,
   warning,
+  placeholder,
 }) => {
   return (
     <div>
@@ -56,7 +58,9 @@ const SelectField: React.FC<SelectFieldProps> = ({
             isDisabled={disabled}
             value={field.value || null}
             isLoading={loading}
-            placeholder={loading ? "Carregando..." : "Selecione uma opção"}
+            placeholder={
+              loading ? "Carregando..." : placeholder || "Selecione uma opção"
+            }
             isClearable
             isSearchable
             classNamePrefix="react-select"

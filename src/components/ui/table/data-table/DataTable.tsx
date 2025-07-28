@@ -51,11 +51,11 @@ interface DataTableProps<T extends { id: string | number }> {
   showAllOption?: boolean;
   customRowRender?: (
     row: Row<T>,
-    table: ReturnType<typeof useReactTable<T>>
+    table: ReturnType<typeof useReactTable<T>>,
   ) => JSX.Element;
   customMobileRowRender?: (
     row: Row<T>,
-    table: ReturnType<typeof useReactTable<T>>
+    table: ReturnType<typeof useReactTable<T>>,
   ) => JSX.Element;
   extraTableOptions?: Partial<
     Omit<
@@ -130,7 +130,7 @@ const DataTable = <
         const maxHeight = 800;
         const height = Math.max(
           minHeight,
-          Math.min(availableHeight, maxHeight)
+          Math.min(availableHeight, maxHeight),
         );
         setTableHeight(`${height}px`);
       }
@@ -147,7 +147,7 @@ const DataTable = <
   useEffect(() => {
     setShowingAll(
       showAllOption &&
-        (pagination.pageSize >= rowCount || pagination.pageSize === -1)
+        (pagination.pageSize >= rowCount || pagination.pageSize === -1),
     );
   }, [pagination.pageSize, rowCount, showAllOption]);
 
@@ -198,7 +198,7 @@ const DataTable = <
     (headerGroups[0]?.headers.length ?? columns.length);
 
   const orderCount = rowModel.filter(
-    (row) => row.original?.isHeader !== true
+    (row) => row.original?.isHeader !== true,
   ).length;
 
   // const handlePageSizeChange = (newPageSize: number) => {
@@ -301,7 +301,7 @@ const DataTable = <
           <span className="block text-[12px] font-medium">
             {flexRender(
               cell.column.columnDef.header,
-              cell.getContext() as unknown as HeaderContext<T, unknown>
+              cell.getContext() as unknown as HeaderContext<T, unknown>,
             )}
           </span>
           <span className="block text-[12px]">
@@ -365,7 +365,7 @@ const DataTable = <
                                   header.getContext() as unknown as HeaderContext<
                                     T,
                                     unknown
-                                  >
+                                  >,
                                 )}
                                 {{
                                   asc: <HiChevronUp />,
@@ -381,7 +381,7 @@ const DataTable = <
                               isLast={headersArray.length - 1 === index}
                             /> */}
                           </TableHead>
-                        )
+                        ),
                       )}
                     </TableRow>
                   ))}
@@ -407,7 +407,7 @@ const DataTable = <
                       {rowModel.map((row) =>
                         customRowRender
                           ? customRowRender(row, table)
-                          : defaultDesktopRowRender(row)
+                          : defaultDesktopRowRender(row),
                       )}
                       {rowModel.length < 10 && !isLoading && (
                         <TableRow className="flex-1 overflow-x-auto">
@@ -537,7 +537,7 @@ const DataTable = <
               {rowModel.map((row) =>
                 customMobileRowRender
                   ? customMobileRowRender(row, table)
-                  : defaultMobileRowRender(row)
+                  : defaultMobileRowRender(row),
               )}
 
               {/* Rodapé para mobile */}
@@ -585,7 +585,7 @@ const DataTable = <
             : `Mostrando ${Math.min(
                 pagination.pageIndex * pagination.pageSize +
                   (orderCount ?? rowModel.length),
-                rowCount
+                rowCount,
               )} de ${rowCount.toLocaleString()}`}
         </div>
         <PageSizeSelect

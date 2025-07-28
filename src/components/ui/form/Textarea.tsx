@@ -23,14 +23,14 @@ const Textarea = ({
 }: TextareaProps) => {
   return (
     <div>
-      <div className="flex relative">
+      <div className="">
         <label className="text-white whitespace-nowrap pt-[8px] pr-2">
           {label}
         </label>
         <textarea
           {...register}
           {...textareaProps}
-          className={`bg-transparent outline-none border placeholder-gray-500 border-gray-300/[.30] p-2 rounded h-20 ${className}`}
+          className={`bg-transparent outline-none border placeholder-gray-500 border-gray-300/[.30] p-2 rounded h-28 ${className}`}
         />
       </div>
       {error && (

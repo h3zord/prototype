@@ -1,11 +1,10 @@
 import DefaultPageContainer from "../../../components/layout/DefaultPageContainer";
+import RecordingTable from "./RecordingTable";
 
 const RecordingPage = () => {
   return (
     <DefaultPageContainer>
-      <div className="m-auto text-3xl">
-        <h1>Gravação</h1>
-      </div>
+      <RecordingTable />
     </DefaultPageContainer>
   );
 };

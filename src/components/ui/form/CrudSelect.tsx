@@ -15,7 +15,7 @@ export interface Option {
 interface CrudSelectProps {
   label: string;
   items: Option[];
-  value: Option | null;
+  value?: Option | null;
   onChange: (selected: Option | null) => void;
   onCreate: () => void;
   onEdit: (item: Option) => void;
@@ -179,7 +179,7 @@ export const CrudSelect: React.FC<CrudSelectProps> = ({
   return (
     <div>
       <div className="flex items-center">
-        <label className="block pr-2 text-white whitespace-nowrap">
+        <label className="block pr-2 text-white whitespace-nowrap mb-1">
           {label}
         </label>
       </div>
@@ -192,7 +192,7 @@ export const CrudSelect: React.FC<CrudSelectProps> = ({
         isClearable
         isSearchable
         classNamePrefix="react-select"
-        className="rounded caret-white"
+        className="rounded caret-white w-[220px]"
         noOptionsMessage={() => "Nenhuma opção encontrada"}
         styles={customStyles}
         components={{
