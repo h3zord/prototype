@@ -10,8 +10,6 @@ import { Button } from "../components/ui/button";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import { Car, ChartColumnStacked, LockKeyhole } from "lucide-react";
 
-import { version } from "../../../package.json";
-
 interface SidebarProps {
   isOpen: boolean;
   onToggle?: () => void;
@@ -591,7 +589,7 @@ export default function Sidebar({
           <Button
             variant="ghost"
             className={`w-full ${isOpen ? "justify-start px-3" : "justify-center px-0"} h-12 rounded-full text-red-400 hover:bg-red-500/20 transition-colors duration-200 relative group`}
-            onClick={() => logout(navigate)}
+            // onClick={() => logout(navigate)}
             onMouseEnter={handleIconHover}
           >
             <div className="flex items-center gap-4">
@@ -607,7 +605,7 @@ export default function Sidebar({
         </div>
         {isOpen && (
           <div className="py-2 px-4 border-t border-gray-700 text-center text-[11px] text-gray-400 select-none">
-            © 2025 easyflow {version}
+            © 2025 easyflow x.x.x
           </div>
         )}
       </div>
