@@ -1,3 +1,7 @@
+import CurrencyInputFixed from "../../../../../components/ui/form/CurrencyInput";
+import Textarea from "../../../../../components/ui/form/Textarea";
+import { FormProvider, useForm } from "react-hook-form";
+import { useState, useEffect } from "react";
 import {
   Modal,
   SelectField,
@@ -5,9 +9,6 @@ import {
   Button,
   FormSection,
 } from "../../../../../components/index";
-import Textarea from "../../../../../components/ui/form/Textarea";
-import { FormProvider, useForm } from "react-hook-form";
-import { useState } from "react";
 
 interface CreateUserModalProps {
   onClose: () => void;
@@ -19,11 +20,18 @@ const TestModal: React.FC<CreateUserModalProps> = ({ onClose }) => {
     control,
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
   } = methods;
+
   const [isLoading, setIsLoading] = useState(false);
 
-  // Dados fake para as opções dos selects
+  const plateFormat = watch("plateFormat");
+  const plateQuantity = watch("plateQuantity");
+  const plateHeight = watch("plateHeight");
+  const plateWidth = watch("plateWidth");
+
   const companyOptions = [
     { value: "1", label: "Master Print" },
     { value: "2", label: "Plastimarau" },
@@ -47,9 +55,12 @@ const TestModal: React.FC<CreateUserModalProps> = ({ onClose }) => {
   const plateThicknessOptions = [
     { value: "1", label: "1.14 - ESXR" },
     { value: "2", label: "1.14 - NX" },
-    { value: "3", label: "1.17 - ESXR" },
-    { value: "4", label: "3.94 - TDR" },
-    { value: "5", label: "6.35 - DEC" },
+    { value: "3", label: "1.16 - Base Alumínio" },
+    { value: "4", label: "1.70 - ESXR" },
+    { value: "5", label: "2.84 - DFS" },
+    { value: "6", label: "3.94 - TDR" },
+    { value: "7", label: "6.35 - DEC" },
+    { value: "8", label: "TIL" },
   ];
 
   const plateFormatOptions = [
@@ -58,14 +69,90 @@ const TestModal: React.FC<CreateUserModalProps> = ({ onClose }) => {
     { value: "3", label: "1,27 x 2,032" },
     { value: "4", label: "Retalho" },
     { value: "5", label: "0,61 x 0,762 - NX" },
+    { value: "6", label: "0,64 x 0,838 - TIL" },
+    { value: "7", label: "0,838 x 1,097 - TIL" },
+    { value: "8", label: "0,80 x 1,067 - NX" },
+    { value: "9", label: "0,865 x 1,060 - Base Alumínio" },
+    { value: "10", label: "1,067 x 1,270" },
   ];
+
+  const extractDimensionsFromFormat = (formatLabel: string) => {
+    const dimensionRegex = /^(\d+,\d+|\d+\.?\d*)\s*x\s*(\d+,\d+|\d+\.?\d*)/;
+    const match = formatLabel.match(dimensionRegex);
+
+    if (match) {
+      const height = parseFloat(match[1].replace(",", "."));
+      const width = parseFloat(match[2].replace(",", "."));
+
+      console.log("Parsed height:", height, "width:", width);
+
+      return { height, width };
+    }
+
+    return null;
+  };
+
+  useEffect(() => {
+    console.log("plateFormat changed:", plateFormat);
+
+    if (plateFormat) {
+      let selectedOption: any;
+      let formatValue: any;
+
+      if (typeof plateFormat === "object" && plateFormat.value) {
+        formatValue = plateFormat.value;
+        selectedOption = plateFormat;
+      } else {
+        formatValue = plateFormat;
+        selectedOption = plateFormatOptions.find(
+          (option) => option.value === formatValue,
+        );
+      }
+
+      if (selectedOption && selectedOption.label) {
+        const dimensions = extractDimensionsFromFormat(selectedOption.label);
+
+        if (dimensions) {
+          const heightBR = dimensions.height.toString().replace(".", ",");
+          const widthBR = dimensions.width.toString().replace(".", ",");
+
+          setValue("plateHeight", heightBR);
+          setValue("plateWidth", widthBR);
+        } else {
+          setValue("plateHeight", "");
+          setValue("plateWidth", "");
+        }
+      }
+    } else {
+      setValue("plateHeight", "");
+      setValue("plateWidth", "");
+    }
+  }, [plateFormat, setValue]);
+
+  useEffect(() => {
+    const quantity = parseFloat(plateQuantity) || 0;
+    const height = parseFloat(plateHeight?.toString().replace(",", ".")) || 0;
+    const width = parseFloat(plateWidth?.toString().replace(",", ".")) || 0;
+
+    if (quantity > 0 && height > 0 && width > 0) {
+      const m2 = (height * width * quantity).toFixed(3);
+      const m2BR = m2.replace(".", ",");
+      console.log("Setting M²:", m2BR);
+      setValue("m2", m2BR);
+    } else if (
+      plateQuantity !== undefined ||
+      plateHeight !== undefined ||
+      plateWidth !== undefined
+    ) {
+      setValue("m2", "");
+    }
+  }, [plateQuantity, plateHeight, plateWidth, setValue]);
 
   // Função fake para o onSubmit
   const onSubmit = async (data: any) => {
     setIsLoading(true);
     try {
       console.log("Dados do formulário:", data);
-      // Simular chamada da API
       await new Promise((resolve) => setTimeout(resolve, 2000));
       alert("Dados salvos com sucesso!");
       onClose();
@@ -89,7 +176,6 @@ const TestModal: React.FC<CreateUserModalProps> = ({ onClose }) => {
             onSubmit={handleSubmit(onSubmit)}
             className="flex flex-col space-y-8"
           >
-            {/* Dados Gerais */}
             <FormSection title="Dados Gerais">
               <SelectField
                 name="company"
@@ -114,7 +200,6 @@ const TestModal: React.FC<CreateUserModalProps> = ({ onClose }) => {
               />
             </FormSection>
 
-            {/* Especificações da Chapa */}
             <FormSection title="Especificações da Chapa">
               <SelectField
                 name="thickness"
@@ -137,31 +222,26 @@ const TestModal: React.FC<CreateUserModalProps> = ({ onClose }) => {
               />
             </FormSection>
 
-            {/* Dimensões e Quantidade */}
             <FormSection title="Dimensões e Quantidade">
               <Input
                 label="Qtde Chapas"
-                type="number"
                 {...register("plateQuantity")}
                 error={errors.plateQuantity}
               />
               <Input
                 label="Altura Chapa"
-                type="number"
                 {...register("plateHeight")}
                 error={errors.plateHeight}
-                endIcon={<span>mm</span>}
+                endIcon={<span>m</span>}
               />
               <Input
                 label="Largura Chapa"
-                type="number"
                 {...register("plateWidth")}
                 error={errors.plateWidth}
-                endIcon={<span>mm</span>}
+                endIcon={<span>m</span>}
               />
               <Input
                 label="M²"
-                type="number"
                 {...register("m2")}
                 error={errors.m2}
                 endIcon={<span>m²</span>}
@@ -175,21 +255,20 @@ const TestModal: React.FC<CreateUserModalProps> = ({ onClose }) => {
                 {...register("invoiceNumber")}
                 error={errors.invoiceNumber}
               />
-              <Input
+              <CurrencyInputFixed
                 label="Valor NF"
-                type="number"
-                {...register("invoiceValue")}
+                endIcon={"R$"}
+                register={register("invoiceValue")}
                 error={errors.invoiceValue}
               />
-              <Input
+              <CurrencyInputFixed
                 label="Dólar"
-                type="number"
-                {...register("dollar")}
+                endIcon={"R$"}
+                register={register("dollar")}
                 error={errors.dollar}
               />
             </FormSection>
 
-            {/* Observações */}
             <FormSection title="Observações">
               <div className="col-span-3">
                 <Textarea
@@ -201,7 +280,6 @@ const TestModal: React.FC<CreateUserModalProps> = ({ onClose }) => {
               </div>
             </FormSection>
 
-            {/* Botões de Ação */}
             <div className="flex justify-end gap-2 pt-4">
               <Button type="button" variant="secondary" onClick={onClose}>
                 Cancelar
