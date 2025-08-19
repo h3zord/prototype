@@ -5,7 +5,6 @@ import { BsBox } from "react-icons/bs";
 import { MdOutlineKeyboardArrowDown } from "react-icons/md";
 import { useState, useEffect } from "react";
 import routes from "../../routes/routes";
-import logout from "../../helpers/logout";
 import { Button } from "../components/ui/button";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import { Car, ChartColumnStacked, LockKeyhole } from "lucide-react";
@@ -114,9 +113,14 @@ const ALL_INVOICE_LINKS: ServiceLink[] = [
 
 const ALL_STORAGE_LINKS: ServiceLink[] = [
   {
-    name: "Gravação",
-    link: routes.RECORDING,
-    route: "/storage/recording",
+    name: "Ent. de Estoque",
+    link: routes.ENTRY,
+    route: "/storage/entry",
+  },
+  {
+    name: "Saí. de Estoque",
+    link: routes.EXIT,
+    route: "/storage/exit",
   },
 ];
 
@@ -267,7 +271,7 @@ export default function Sidebar({
       const currentPath = location.pathname;
 
       const isInServiceOrderRoute = ALL_SERVICE_ORDER_LINKS.some(
-        (link) => link.link === currentPath,
+        (link) => link.link === currentPath
       );
       if (isInServiceOrderRoute) {
         setServiceOrderOpen(true);
@@ -276,7 +280,7 @@ export default function Sidebar({
       }
 
       const isInInvoiceRoute = ALL_INVOICE_LINKS.some(
-        (link) => link.link === currentPath,
+        (link) => link.link === currentPath
       );
       if (isInInvoiceRoute) {
         setFinancialOpen(true);
@@ -525,7 +529,7 @@ export default function Sidebar({
                       )}
                     </div>
                     <span className="text-sm font-medium flex-1 text-left">
-                      Estoque
+                      Gravação
                     </span>
                     <MdOutlineKeyboardArrowDown
                       className={`transition-transform duration-200 ${storageOpen ? "rotate-180" : ""}`}

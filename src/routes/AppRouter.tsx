@@ -21,7 +21,8 @@ import InvoicedServiceOrdersPage from "../features/invoicedServiceOrder/componen
 import ReplacementsPage from "../features/replacements/components/ReplacementsPage";
 import PermissionsPage from "../features/permissions/permissionsPage";
 import ServiceOrderPage from "../features/serviceOrder/components/ServiceOrderPage";
-import RecordingPage from "../features/storage/components/RecordingPage";
+import EntryPage from "../features/storage/entry/components/EntryPage";
+import ExitPage from "../features/storage/exit/components/ExitPage";
 
 function AppRouter() {
   return (
@@ -38,7 +39,8 @@ function AppRouter() {
         <Route path={routes.INVOICE} element={<InvoicePage />} />
         <Route path={routes.REPLACEMENTS} element={<ReplacementsPage />} />
         <Route path={routes.PERMISSIONS} element={<PermissionsPage />} />
-        <Route path={routes.RECORDING} element={<RecordingPage />} />
+        <Route path={routes.ENTRY} element={<EntryPage />} />
+        <Route path={routes.EXIT} element={<ExitPage />} />
 
         <Route
           path={routes.CUSTOMER_PRINTER}

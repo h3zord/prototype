@@ -1,12 +1,16 @@
-import DataTable from "../../../components/ui/table/data-table/DataTable";
 import TestModal from "./modal/test";
 import { useMemo } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import { Button, DataTableHeader, IconButton } from "../../../components";
 import { FiShoppingCart } from "react-icons/fi";
-import { useModal } from "../../../hooks/useModal";
 import { BiSolidEdit } from "react-icons/bi";
 import { PiPlusBold } from "react-icons/pi";
+import {
+  IconButton,
+  DataTableHeader,
+  Button,
+} from "../../../../components/index";
+import { useModal } from "../../../../hooks/useModal";
+import DataTable from "../../../../components/ui/table/data-table/DataTable";
 
 const RecordingTable = () => {
   const { openModal, closeModal } = useModal();

@@ -27,7 +27,8 @@ enum routes {
   REPLACEMENTS = "/replacements",
   PERMISSIONS = "/permissions",
   DOCS = "/docs",
-  RECORDING = "/storage/recording",
+  ENTRY = "/storage/entry",
+  EXIT = "/storage/exit",
 }
 
 export default routes;
