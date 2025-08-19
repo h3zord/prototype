@@ -38,19 +38,9 @@ const CurrencyInputFixed = ({
   const [displayValue, setDisplayValue] = useState("");
   const [hasInitialized, setHasInitialized] = useState(false);
 
-  // Usa o watch do react-hook-form se register estiver disponível
   const formContext = useFormContext();
   const fieldValue =
     formContext && register ? formContext.watch(register.name) : undefined;
-
-  // Debug
-  // console.log(`CurrencyInput ${label}:`, {
-  //   fieldValue,
-  //   displayValue,
-  //   propsValue: inputProps.value,
-  //   hasInitialized,
-  //   registerName: register?.name,
-  // });
 
   useEffect(() => {
     if (endIconRef.current) {
@@ -58,27 +48,21 @@ const CurrencyInputFixed = ({
     }
   }, [endIcon]);
 
-  // Função para formatar o valor como moeda
   const formatCurrency = (value: string | number): string => {
-    // Converte para string se for número
     const valueStr = typeof value === "number" ? value.toString() : value;
 
-    // Remove tudo que não é número
     const numbers = valueStr.replace(/\D/g, "");
 
     if (numbers === "") return "";
 
-    // Sempre divide por 100 para considerar os centavos
     const amount = parseInt(numbers) / Math.pow(10, digits);
 
-    // Formata como moeda brasileira
     return amount.toLocaleString("pt-BR", {
       minimumFractionDigits: digits,
       maximumFractionDigits: digits,
     });
   };
 
-  // Função para converter valor numérico direto do backend
   const formatFromNumber = (value: number): string => {
     return value.toLocaleString("pt-BR", {
       minimumFractionDigits: digits,
@@ -86,7 +70,6 @@ const CurrencyInputFixed = ({
     });
   };
 
-  // Função para converter valor formatado para número
   const unformatCurrency = (value: string): string => {
     const numbers = value.replace(/\D/g, "");
     if (numbers === "") return "";
@@ -100,7 +83,6 @@ const CurrencyInputFixed = ({
     const formatted = formatCurrency(inputValue);
     setDisplayValue(formatted);
 
-    // Se tiver register, atualiza o valor real (não formatado)
     if (register) {
       const unformatted = unformatCurrency(inputValue);
       const event = {
@@ -114,23 +96,13 @@ const CurrencyInputFixed = ({
     }
   };
 
-  // Efeito para formatar valor inicial
   useEffect(() => {
-    // Determina qual valor usar
     const valueToUse = fieldValue !== undefined ? fieldValue : inputProps.value;
 
-    console.log(`CurrencyInput ${label} - Effect:`, {
-      valueToUse,
-      typeOfValue: typeof valueToUse,
-      hasInitialized,
-    });
-
-    // Se não houver valor, não faz nada
     if (valueToUse === undefined || valueToUse === null) {
       return;
     }
 
-    // Se o valor for 0 e não tiver inicializado ainda, mostra vazio
     if (valueToUse === 0 && !hasInitialized) {
       setDisplayValue("");
       setHasInitialized(true);
@@ -172,7 +144,7 @@ const CurrencyInputFixed = ({
 
   return (
     <div className="flex flex-col relative justify-center">
-      {label && <label className="text-white mb-1 text-sm">{label}</label>}
+      {label && <label className="text-white mb-1 text-md">{label}</label>}
       <div className={`relative w-full ${disabled ? "bg-white/10" : ""}`}>
         {endIcon && (
           <span

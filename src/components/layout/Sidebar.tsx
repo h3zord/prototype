@@ -271,7 +271,7 @@ export default function Sidebar({
       const currentPath = location.pathname;
 
       const isInServiceOrderRoute = ALL_SERVICE_ORDER_LINKS.some(
-        (link) => link.link === currentPath
+        (link) => link.link === currentPath,
       );
       if (isInServiceOrderRoute) {
         setServiceOrderOpen(true);
@@ -280,7 +280,7 @@ export default function Sidebar({
       }
 
       const isInInvoiceRoute = ALL_INVOICE_LINKS.some(
-        (link) => link.link === currentPath
+        (link) => link.link === currentPath,
       );
       if (isInInvoiceRoute) {
         setFinancialOpen(true);
