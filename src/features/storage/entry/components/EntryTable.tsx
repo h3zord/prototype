@@ -1,7 +1,6 @@
 import TestModal from "./modal/test";
 import { useMemo } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import { FiShoppingCart } from "react-icons/fi";
 import { BiSolidEdit } from "react-icons/bi";
 import { PiPlusBold } from "react-icons/pi";
 import {
@@ -11,6 +10,7 @@ import {
 } from "../../../../components/index";
 import { useModal } from "../../../../hooks/useModal";
 import DataTable from "../../../../components/ui/table/data-table/DataTable";
+import { Trash } from "lucide-react";
 
 const RecordingTable = () => {
   const { openModal, closeModal } = useModal();
@@ -459,9 +459,7 @@ const RecordingTable = () => {
               }
             />
             <IconButton
-              icon={
-                <FiShoppingCart size={18} className="text-white outline-none" />
-              }
+              icon={<Trash size={18} className="text-white outline-none" />}
             />
           </div>
         );

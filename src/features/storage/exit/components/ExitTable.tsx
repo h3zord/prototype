@@ -1,7 +1,6 @@
 import TestModal from "./modal/test";
 import { useMemo } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import { FiShoppingCart } from "react-icons/fi";
 import { BiSolidEdit } from "react-icons/bi";
 import { PiPlusBold } from "react-icons/pi";
 import {
@@ -11,6 +10,7 @@ import {
 } from "../../../../components/index";
 import { useModal } from "../../../../hooks/useModal";
 import DataTable from "../../../../components/ui/table/data-table/DataTable";
+import { Trash } from "lucide-react";
 
 const RecordingTable = () => {
   const { openModal, closeModal } = useModal();
@@ -24,19 +24,18 @@ const RecordingTable = () => {
   interface StockData {
     id: number;
     codigo: string;
-    entrada: string;
-    empresa: string;
-    fabricante: string;
+    lct: string;
     espessura: string;
-    refChapa: string;
+    tipo: string;
     aChapa: string;
     lChapa: string;
-    qChapa: number;
-    totalM2: string;
-    vlM2: string;
-    numNF: string;
-    valorNF: string;
-    dolar: string;
+    nChapa: number;
+    m2: string;
+    aproveitamento: string;
+    sobraM2: string;
+    data: string;
+    hora: string;
+    usuario: string;
     uni: string;
   }
 
@@ -44,199 +43,188 @@ const RecordingTable = () => {
     {
       id: 1,
       codigo: "001208",
-      entrada: "04/06/2025",
-      empresa: "FLEXOGRAV SP",
-      fabricante: "Kodak",
+      lct: "LCT001",
       espessura: "1.14 - NX",
-      refChapa: "NX 1.14",
+      tipo: "NX 1.14",
       aChapa: "0,80",
       lChapa: "1,07",
-      qChapa: 80,
-      totalM2: "68,288",
-      vlM2: "R$ 488,69",
-      numNF: "093.403",
-      valorNF: "R$ 33.371,88",
-      dolar: "R$ 5,71",
+      nChapa: 80,
+      m2: "68,288",
+      aproveitamento: "85%",
+      sobraM2: "10,243",
+      data: "04/06/2025",
+      hora: "08:30",
+      usuario: "João Silva",
       uni: "SP",
     },
     {
       id: 2,
       codigo: "001209",
-      entrada: "04/06/2025",
-      empresa: "FLEXOGRAV SP",
-      fabricante: "Kodak",
+      lct: "LCT002",
       espessura: "TIL",
-      refChapa: "TIL",
+      tipo: "TIL",
       aChapa: "0,84",
       lChapa: "1,10",
-      qChapa: 80,
-      totalM2: "73,543",
-      vlM2: "R$ 551,35",
-      numNF: "093.403",
-      valorNF: "R$ 40.547,59",
-      dolar: "R$ 5,71",
+      nChapa: 80,
+      m2: "73,543",
+      aproveitamento: "90%",
+      sobraM2: "7,354",
+      data: "04/06/2025",
+      hora: "09:15",
+      usuario: "Maria Santos",
       uni: "SP",
     },
     {
       id: 3,
       codigo: "001210",
-      entrada: "04/06/2025",
-      empresa: "Flexograv Farroupilha",
-      fabricante: "Dupont",
+      lct: "LCT003",
       espessura: "6.35 - DEC",
-      refChapa: "DEC 250",
+      tipo: "DEC 250",
       aChapa: "1,07",
       lChapa: "1,52",
-      qChapa: 60,
-      totalM2: "97,566",
-      vlM2: "R$ 759,71",
-      numNF: "085.226",
-      valorNF: "R$ 74.121,51",
-      dolar: "R$ 5,69",
+      nChapa: 60,
+      m2: "97,566",
+      aproveitamento: "78%",
+      sobraM2: "21,465",
+      data: "04/06/2025",
+      hora: "10:00",
+      usuario: "Pedro Costa",
       uni: "RS",
     },
     {
       id: 4,
       codigo: "001211",
-      entrada: "04/06/2025",
-      empresa: "Flexograv Farroupilha",
-      fabricante: "Dupont",
+      lct: "LCT004",
       espessura: "1.14 - ESXR",
-      refChapa: "ESXR 045",
+      tipo: "ESXR 045",
       aChapa: "1,07",
       lChapa: "1,27",
-      qChapa: 48,
-      totalM2: "65,044",
-      vlM2: "R$ 550,28",
-      numNF: "085.226",
-      valorNF: "R$ 35.792,69",
-      dolar: "R$ 5,69",
+      nChapa: 48,
+      m2: "65,044",
+      aproveitamento: "92%",
+      sobraM2: "5,204",
+      data: "04/06/2025",
+      hora: "11:30",
+      usuario: "Ana Oliveira",
       uni: "RS",
     },
     {
       id: 5,
       codigo: "001212",
-      entrada: "04/06/2025",
-      empresa: "Flexograv Farroupilha",
-      fabricante: "Dupont",
+      lct: "LCT005",
       espessura: "1.70 - ESXR",
-      refChapa: "ESXR 067",
+      tipo: "ESXR 067",
       aChapa: "1,07",
       lChapa: "1,52",
-      qChapa: 20,
-      totalM2: "32,522",
-      vlM2: "R$ 599,97",
-      numNF: "085.226",
-      valorNF: "R$ 19.512,12",
-      dolar: "R$ 5,69",
+      nChapa: 20,
+      m2: "32,522",
+      aproveitamento: "88%",
+      sobraM2: "3,903",
+      data: "04/06/2025",
+      hora: "14:15",
+      usuario: "Carlos Lima",
       uni: "RS",
     },
     {
       id: 6,
       codigo: "001213",
-      entrada: "04/06/2025",
-      empresa: "Flexograv Farroupilha",
-      fabricante: "Dupont",
+      lct: "LCT006",
       espessura: "1.14 - ESXR",
-      refChapa: "ESXR 045",
+      tipo: "ESXR 045",
       aChapa: "1,07",
       lChapa: "1,52",
-      qChapa: 48,
-      totalM2: "78,053",
-      vlM2: "R$ 550,28",
-      numNF: "085.226",
-      valorNF: "R$ 42.950,78",
-      dolar: "R$ 5,69",
+      nChapa: 48,
+      m2: "78,053",
+      aproveitamento: "95%",
+      sobraM2: "3,903",
+      data: "04/06/2025",
+      hora: "15:00",
+      usuario: "Lucia Ferreira",
       uni: "RS",
     },
     {
       id: 7,
       codigo: "001214",
-      entrada: "04/06/2025",
-      empresa: "Flexograv Farroupilha",
-      fabricante: "Dupont",
+      lct: "LCT007",
       espessura: "3.94 - TDR",
-      refChapa: "EPC 155",
+      tipo: "EPC 155",
       aChapa: "1,27",
       lChapa: "2,03",
-      qChapa: 6,
-      totalM2: "15,484",
-      vlM2: "R$ 748,78",
-      numNF: "085.226",
-      valorNF: "R$ 11.594,11",
-      dolar: "R$ 5,69",
+      nChapa: 6,
+      m2: "15,484",
+      aproveitamento: "82%",
+      sobraM2: "2,787",
+      data: "04/06/2025",
+      hora: "16:30",
+      usuario: "Roberto Alves",
       uni: "RS",
     },
     {
       id: 8,
       codigo: "001215",
-      entrada: "05/06/2025",
-      empresa: "FLEXOGRAV SP",
-      fabricante: "Dupont",
+      lct: "LCT008",
       espessura: "1.14 - ESXR",
-      refChapa: "ESXR 045",
+      tipo: "ESXR 045",
       aChapa: "1,07",
       lChapa: "1,27",
-      qChapa: 60,
-      totalM2: "81,305",
-      vlM2: "R$ 562,79",
-      numNF: "085.285",
-      valorNF: "R$ 45.757,89",
-      dolar: "R$ 5,67",
+      nChapa: 60,
+      m2: "81,305",
+      aproveitamento: "89%",
+      sobraM2: "8,944",
+      data: "05/06/2025",
+      hora: "08:00",
+      usuario: "Fernanda Rocha",
       uni: "SP",
     },
     {
       id: 9,
       codigo: "001216",
-      entrada: "05/06/2025",
-      empresa: "FLEXOGRAV SP",
-      fabricante: "Dupont",
+      lct: "LCT009",
       espessura: "1.70 - ESXR",
-      refChapa: "ESXR 067",
+      tipo: "ESXR 067",
       aChapa: "1,07",
       lChapa: "1,52",
-      qChapa: 20,
-      totalM2: "32,522",
-      vlM2: "R$ 641,03",
-      numNF: "085.285",
-      valorNF: "R$ 20.847,73",
-      dolar: "R$ 5,67",
+      nChapa: 20,
+      m2: "32,522",
+      aproveitamento: "91%",
+      sobraM2: "2,927",
+      data: "05/06/2025",
+      hora: "09:30",
+      usuario: "Daniel Souza",
       uni: "SP",
     },
     {
       id: 10,
       codigo: "001217",
-      entrada: "05/06/2025",
-      empresa: "FLEXOGRAV SP",
-      fabricante: "Dupont",
+      lct: "LCT010",
       espessura: "1.14 - ESXR",
-      refChapa: "ESXR 045",
+      tipo: "ESXR 045",
       aChapa: "1,07",
       lChapa: "1,52",
-      qChapa: 36,
-      totalM2: "58,340",
-      vlM2: "R$ 562,78",
-      numNF: "085.285",
-      valorNF: "R$ 32.945,38",
-      dolar: "R$ 5,67",
+      nChapa: 36,
+      m2: "58,340",
+      aproveitamento: "87%",
+      sobraM2: "7,584",
+      data: "05/06/2025",
+      hora: "11:00",
+      usuario: "Patrícia Mendes",
       uni: "SP",
     },
     {
       id: 11,
       codigo: "TOTAL",
-      entrada: "",
-      empresa: "",
-      fabricante: "",
+      lct: "",
       espessura: "",
-      refChapa: "",
+      tipo: "",
       aChapa: "",
       lChapa: "",
-      qChapa: 458,
-      totalM2: "602,667",
-      vlM2: "",
-      numNF: "",
-      valorNF: "R$ 357.441,68",
-      dolar: "",
+      nChapa: 458,
+      m2: "602,667",
+      aproveitamento: "88%",
+      sobraM2: "74,314",
+      data: "",
+      hora: "",
+      usuario: "",
       uni: "",
     },
   ];
@@ -257,40 +245,14 @@ const RecordingTable = () => {
         },
       },
       {
-        accessorKey: "entrada",
-        header: "Entrada",
+        accessorKey: "lct",
+        header: "LCTO",
         enableSorting: false,
         cell: ({ row, table }) => {
           const isLastRow = row.index === table.getRowModel().rows.length - 1;
           return (
             <div className={isLastRow ? "font-bold" : ""}>
-              {row.original.entrada}
-            </div>
-          );
-        },
-      },
-      {
-        accessorKey: "empresa",
-        header: "Empresa",
-        enableSorting: false,
-        cell: ({ row, table }) => {
-          const isLastRow = row.index === table.getRowModel().rows.length - 1;
-          return (
-            <div className={isLastRow ? "font-bold" : ""}>
-              {row.original.empresa}
-            </div>
-          );
-        },
-      },
-      {
-        accessorKey: "fabricante",
-        header: "Fabricante",
-        enableSorting: false,
-        cell: ({ row, table }) => {
-          const isLastRow = row.index === table.getRowModel().rows.length - 1;
-          return (
-            <div className={isLastRow ? "font-bold" : ""}>
-              {row.original.fabricante}
+              {row.original.lct}
             </div>
           );
         },
@@ -309,21 +271,21 @@ const RecordingTable = () => {
         },
       },
       {
-        accessorKey: "refChapa",
-        header: "Ref. Chapa",
+        accessorKey: "tipo",
+        header: "Tipo",
         enableSorting: false,
         cell: ({ row, table }) => {
           const isLastRow = row.index === table.getRowModel().rows.length - 1;
           return (
             <div className={isLastRow ? "font-bold" : ""}>
-              {row.original.refChapa}
+              {row.original.tipo}
             </div>
           );
         },
       },
       {
         accessorKey: "aChapa",
-        header: "A. Chapa",
+        header: "A.Chapa",
         enableSorting: false,
         cell: ({ row, table }) => {
           const isLastRow = row.index === table.getRowModel().rows.length - 1;
@@ -336,7 +298,7 @@ const RecordingTable = () => {
       },
       {
         accessorKey: "lChapa",
-        header: "L. Chapa",
+        header: "L.Chapa",
         enableSorting: false,
         cell: ({ row, table }) => {
           const isLastRow = row.index === table.getRowModel().rows.length - 1;
@@ -348,86 +310,99 @@ const RecordingTable = () => {
         },
       },
       {
-        accessorKey: "qChapa",
-        header: "Q. Chapas",
+        accessorKey: "nChapa",
+        header: "N.Chapa",
         enableSorting: false,
         cell: ({ row, table }) => {
           const isLastRow = row.index === table.getRowModel().rows.length - 1;
           return (
             <div className={isLastRow ? "font-bold" : ""}>
-              {row.original.qChapa}
+              {row.original.nChapa}
             </div>
           );
         },
       },
       {
-        accessorKey: "totalM2",
-        header: "Total m²",
+        accessorKey: "m2",
+        header: "M2",
         enableSorting: false,
         cell: ({ row, table }) => {
           const isLastRow = row.index === table.getRowModel().rows.length - 1;
           return (
             <div className={isLastRow ? "font-bold" : ""}>
-              {row.original.totalM2}
+              {row.original.m2}
             </div>
           );
         },
       },
       {
-        accessorKey: "vlM2",
-        header: "VL m²",
+        accessorKey: "aproveitamento",
+        header: "% Aprov.",
         enableSorting: false,
         cell: ({ row, table }) => {
           const isLastRow = row.index === table.getRowModel().rows.length - 1;
           return (
             <div className={isLastRow ? "font-bold" : ""}>
-              {row.original.vlM2}
+              {row.original.aproveitamento}
             </div>
           );
         },
       },
       {
-        accessorKey: "numNF",
-        header: "Nº NF",
+        accessorKey: "sobraM2",
+        header: "Sobra M2",
         enableSorting: false,
         cell: ({ row, table }) => {
           const isLastRow = row.index === table.getRowModel().rows.length - 1;
           return (
             <div className={isLastRow ? "font-bold" : ""}>
-              {row.original.numNF}
+              {row.original.sobraM2}
             </div>
           );
         },
       },
       {
-        accessorKey: "valorNF",
-        header: "Valor NF",
+        accessorKey: "data",
+        header: "Data",
         enableSorting: false,
         cell: ({ row, table }) => {
           const isLastRow = row.index === table.getRowModel().rows.length - 1;
           return (
             <div className={isLastRow ? "font-bold" : ""}>
-              {row.original.valorNF}
+              {row.original.data}
             </div>
           );
         },
       },
       {
-        accessorKey: "dolar",
-        header: "Dólar",
+        accessorKey: "hora",
+        header: "Hora",
         enableSorting: false,
         cell: ({ row, table }) => {
           const isLastRow = row.index === table.getRowModel().rows.length - 1;
           return (
             <div className={isLastRow ? "font-bold" : ""}>
-              {row.original.dolar}
+              {row.original.hora}
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "usuario",
+        header: "Usuário",
+        enableSorting: false,
+        cell: ({ row, table }) => {
+          const isLastRow = row.index === table.getRowModel().rows.length - 1;
+          return (
+            <div className={isLastRow ? "font-bold" : ""}>
+              {row.original.usuario}
             </div>
           );
         },
       },
       {
         accessorKey: "uni",
-        header: "Uni.",
+        header: "Uni",
         enableSorting: false,
         cell: ({ row, table }) => {
           const isLastRow = row.index === table.getRowModel().rows.length - 1;
@@ -459,9 +434,7 @@ const RecordingTable = () => {
               }
             />
             <IconButton
-              icon={
-                <FiShoppingCart size={18} className="text-white outline-none" />
-              }
+              icon={<Trash size={18} className="text-white outline-none" />}
             />
           </div>
         );
@@ -479,7 +452,7 @@ const RecordingTable = () => {
             <Button onClick={handleCreateClick}>
               <div className="flex items-center justify-center gap-2">
                 <PiPlusBold />
-                <span>Incluir</span>
+                <span>Criar Saída</span>
               </div>
             </Button>
             <div className="text-[12px] text-[white] flex items-center justify-center gap-1">
