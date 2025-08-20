@@ -14,7 +14,7 @@ interface CreateUserModalProps {
   onClose: () => void;
 }
 
-const TestModal: React.FC<CreateUserModalProps> = ({ onClose }) => {
+const EntryModal: React.FC<CreateUserModalProps> = ({ onClose }) => {
   const methods = useForm();
   const {
     control,
@@ -33,11 +33,20 @@ const TestModal: React.FC<CreateUserModalProps> = ({ onClose }) => {
   const plateWidth = watch("plateWidth");
 
   const companyOptions = [
-    { value: "1", label: "Master Print" },
-    { value: "2", label: "Plastimarau" },
-    { value: "3", label: "Plaszom" },
-    { value: "4", label: "Megalabel" },
-    { value: "5", label: "Gráfica Estrela" },
+    { value: "1", label: "Adhesive Label" },
+    { value: "2", label: "EmCasa" },
+    { value: "3", label: "Flexograv Farroupilha" },
+    { value: "4", label: "Flexograv RS" },
+    { value: "5", label: "Flexograv SP" },
+    { value: "6", label: "Gráfica Estrela" },
+    { value: "7", label: "Gualapack Brasil" },
+    { value: "8", label: "Master Print" },
+    { value: "9", label: "Megalabel" },
+    { value: "10", label: "Plásticos Itália" },
+    { value: "11", label: "Plastimarau" },
+    { value: "12", label: "Plaszom" },
+    { value: "13", label: "Gráfica Estrela" },
+    { value: "14", label: "Sebastian" },
   ];
 
   const unitOptions = [
@@ -76,6 +85,19 @@ const TestModal: React.FC<CreateUserModalProps> = ({ onClose }) => {
     { value: "10", label: "1,067 x 1,270" },
   ];
 
+  const plateReferenceOptions = [
+    { value: "1", label: "DEC 250" },
+    { value: "2", label: "ESXR 045" },
+    { value: "3", label: "ESXR 067" },
+    { value: "4", label: "TIL" },
+    { value: "5", label: "DPL 112" },
+    { value: "6", label: "EPC 155" },
+    { value: "7", label: "CYU ESXR 045" },
+    { value: "8", label: "CYU ESXR 067" },
+    { value: "9", label: "CYU DEC 250" },
+    { value: "10", label: "NYLOFLEX 635D" },
+  ];
+
   const extractDimensionsFromFormat = (formatLabel: string) => {
     const dimensionRegex = /^(\d+,\d+|\d+\.?\d*)\s*x\s*(\d+,\d+|\d+\.?\d*)/;
     const match = formatLabel.match(dimensionRegex);
@@ -93,8 +115,6 @@ const TestModal: React.FC<CreateUserModalProps> = ({ onClose }) => {
   };
 
   useEffect(() => {
-    console.log("plateFormat changed:", plateFormat);
-
     if (plateFormat) {
       let selectedOption: any;
       let formatValue: any;
@@ -215,9 +235,11 @@ const TestModal: React.FC<CreateUserModalProps> = ({ onClose }) => {
                 options={plateFormatOptions}
                 error={errors.plateFormat}
               />
-              <Input
+              <SelectField
+                name="plateReference"
                 label="Ref. Chapa"
-                {...register("plateReference")}
+                control={control}
+                options={plateReferenceOptions}
                 error={errors.plateReference}
               />
             </FormSection>
@@ -248,7 +270,6 @@ const TestModal: React.FC<CreateUserModalProps> = ({ onClose }) => {
               />
             </FormSection>
 
-            {/* Dados Financeiros */}
             <FormSection title="Dados Financeiros">
               <Input
                 label="Num. NF"
@@ -295,4 +316,4 @@ const TestModal: React.FC<CreateUserModalProps> = ({ onClose }) => {
   );
 };
 
-export default TestModal;
+export default EntryModal;

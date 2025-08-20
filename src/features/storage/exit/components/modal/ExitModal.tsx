@@ -1,3 +1,6 @@
+import BarcodeScanner from "../BarcodeScanner";
+import DateInput from "../../../../../components/ui/form/DateInput";
+import { Plus, Minus, Scan } from "lucide-react";
 import { useState, useEffect } from "react";
 import { FormProvider, useForm, useFieldArray } from "react-hook-form";
 import {
@@ -7,8 +10,6 @@ import {
   Button,
   FormSection,
 } from "../../../../../components/index";
-import { Plus, Minus, Scan } from "lucide-react";
-import BarcodeScanner from "../BarcodeScanner";
 
 interface StockExitModalProps {
   onClose: () => void;
@@ -47,7 +48,7 @@ interface FormData {
   additionalItems: StockItem[];
 }
 
-const StockExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
+const ExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
   const methods = useForm<FormData>({
     defaultValues: {
       qtdeChapa: 1,
@@ -75,8 +76,10 @@ const StockExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [showRetalhoSection, setShowRetalhoSection] = useState(false);
-  const [isScannerOpen, setIsScannerOpen] = useState(false); // Estado para controlar o scanner
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
 
+  const tipoSaida = watch("tipoSaida") as any;
+  const qtdeChapa = watch("qtdeChapa") as any;
   const larguraChapa = watch("larguraChapa");
   const alturaChapa = watch("alturaChapa");
   const m2 = watch("m2");
@@ -90,17 +93,102 @@ const StockExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
   const plateThicknessOptions = [
     { value: "1", label: "1.14 - ESXR" },
     { value: "2", label: "1.14 - NX" },
-    { value: "3", label: "1.17 - ESXR" },
-    { value: "4", label: "3.94 - TDR" },
-    { value: "5", label: "6.35 - DEC" },
+    { value: "3", label: "1.16 - Base Alumínio" },
+    { value: "4", label: "1.70 - ESXR" },
+    { value: "5", label: "2.84 - DFS" },
+    { value: "6", label: "3.94 - TDR" },
+    { value: "7", label: "6.35 - DEC" },
+    { value: "8", label: "TIL" },
   ];
 
   const tipoSaidaOptions = [
-    { value: "venda", label: "Venda" },
-    { value: "uso", label: "Uso Interno" },
-    { value: "descarte", label: "Descarte" },
-    { value: "transferencia", label: "Transferência" },
+    { value: "1", label: "0,90 x 1,20" },
+    { value: "2", label: "1,067 x 1,524" },
+    { value: "3", label: "1,27 x 2,032" },
+    { value: "4", label: "Retalho" },
+    { value: "5", label: "0,61 x 0,762 - NX" },
+    { value: "6", label: "0,64 x 0,838 - TIL" },
+    { value: "7", label: "0,838 x 1,097 - TIL" },
+    { value: "8", label: "0,80 x 1,067 - NX" },
+    { value: "9", label: "0,865 x 1,060 - Base Alumínio" },
+    { value: "10", label: "1,067 x 1,270" },
   ];
+
+  const extractDimensionsFromFormat = (formatLabel: string) => {
+    const dimensionRegex = /^(\d+,\d+|\d+\.?\d*)\s*x\s*(\d+,\d+|\d+\.?\d*)/;
+    const match = formatLabel.match(dimensionRegex);
+
+    console.log("Regex match:", match);
+
+    if (match) {
+      const height = parseFloat(match[1].replace(",", "."));
+      const width = parseFloat(match[2].replace(",", "."));
+
+      return { height, width };
+    }
+
+    return null;
+  };
+
+  useEffect(() => {
+    if (tipoSaida) {
+      let selectedOption: any;
+      let formatValue: any;
+
+      if (typeof tipoSaida === "object" && tipoSaida.value) {
+        formatValue = tipoSaida.value;
+        selectedOption = tipoSaida;
+      } else {
+        formatValue = tipoSaida;
+        selectedOption = tipoSaidaOptions.find(
+          (option) => option.value === formatValue,
+        );
+      }
+
+      if (selectedOption && selectedOption.label) {
+        const dimensions = extractDimensionsFromFormat(selectedOption.label);
+
+        if (dimensions) {
+          const heightBR = dimensions.height.toString().replace(".", ",");
+          const widthBR = dimensions.width.toString().replace(".", ",");
+
+          setValue("alturaChapa", heightBR);
+          setValue("larguraChapa", widthBR);
+
+          const quantity = parseFloat(qtdeChapa) || 1;
+          const m2Value = (
+            dimensions.height *
+            dimensions.width *
+            quantity
+          ).toFixed(3);
+          const m2BR = m2Value.replace(".", ",");
+
+          console.log("Setting M²:", m2BR);
+          setValue("m2", m2BR);
+        } else {
+          setValue("alturaChapa", "");
+          setValue("larguraChapa", "");
+          setValue("m2", "");
+        }
+      }
+    } else {
+      setValue("alturaChapa", "");
+      setValue("larguraChapa", "");
+      setValue("m2", "");
+    }
+  }, [tipoSaida, qtdeChapa, setValue]);
+
+  useEffect(() => {
+    const quantity = parseFloat(qtdeChapa) || 0;
+    const height = parseFloat(alturaChapa?.toString().replace(",", ".")) || 0;
+    const width = parseFloat(larguraChapa?.toString().replace(",", ".")) || 0;
+
+    if (quantity > 0 && height > 0 && width > 0) {
+      const m2Value = (height * width * quantity).toFixed(3);
+      const m2BR = m2Value.replace(".", ",");
+      setValue("m2", m2BR);
+    }
+  }, [qtdeChapa, alturaChapa, larguraChapa, setValue]);
 
   const generateBarcode = (): string => {
     const timestamp = Date.now();
@@ -111,9 +199,9 @@ const StockExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
   const calculateRetalho = () => {
     if (!larguraChapa || !alturaChapa || !m2) return;
 
-    const largura = parseFloat(larguraChapa);
-    const altura = parseFloat(alturaChapa);
-    const m2Usado = parseFloat(m2);
+    const largura = parseFloat(larguraChapa.replace(",", "."));
+    const altura = parseFloat(alturaChapa.replace(",", "."));
+    const m2Usado = parseFloat(m2.replace(",", "."));
 
     if (largura > 0 && altura > 0 && m2Usado > 0) {
       const m2Total = largura * altura;
@@ -125,9 +213,9 @@ const StockExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
         const larguraRetalho = largura;
         const alturaRetalho = m2Retalho / largura;
 
-        setValue("larguraRetalho", larguraRetalho.toFixed(2));
-        setValue("alturaRetalho", alturaRetalho.toFixed(2));
-        setValue("m2Retalho", m2Retalho.toFixed(2));
+        setValue("larguraRetalho", larguraRetalho.toFixed(2).replace(".", ","));
+        setValue("alturaRetalho", alturaRetalho.toFixed(2).replace(".", ","));
+        setValue("m2Retalho", m2Retalho.toFixed(2).replace(".", ","));
         setValue("codigoBarrasRetalho", generateBarcode());
       } else {
         setShowRetalhoSection(false);
@@ -143,18 +231,10 @@ const StockExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
     calculateRetalho();
   }, [larguraChapa, alturaChapa, m2]);
 
-  // Função para processar o código de barras lido
   const handleBarcodeRead = (barcodeData: string) => {
-    console.log("Código de barras lido:", barcodeData);
-
-    // Aqui você pode implementar a lógica para decodificar o código de barras
-    // e extrair as informações necessárias
-    // Por exemplo, se o código segue um padrão específico:
-
-    // Simulação de dados baseados no código lido
     const mockBarcodeData = {
-      largura: "1.25",
-      altura: "2.50",
+      largura: "1,25",
+      altura: "2,50",
       espessura: "2",
       unidade: "1",
     };
@@ -163,24 +243,21 @@ const StockExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
     setValue("alturaChapa", mockBarcodeData.altura);
     setValue("espessura", mockBarcodeData.espessura);
     setValue("unidade", mockBarcodeData.unidade);
-    setValue(
-      "m2",
-      (
-        parseFloat(mockBarcodeData.largura) * parseFloat(mockBarcodeData.altura)
-      ).toFixed(2)
-    );
+
+    const largura = parseFloat(mockBarcodeData.largura.replace(",", "."));
+    const altura = parseFloat(mockBarcodeData.altura.replace(",", "."));
+    const m2Value = (largura * altura).toFixed(2).replace(".", ",");
+    setValue("m2", m2Value);
 
     alert(
-      `Código de barras lido com sucesso!\nCódigo: ${barcodeData}\nDados preenchidos automaticamente.`
+      `Código de barras lido com sucesso!\nCódigo: ${barcodeData}\nDados preenchidos automaticamente.`,
     );
   };
 
-  // Função para abrir o scanner
   const openBarcodeScanner = () => {
     setIsScannerOpen(true);
   };
 
-  // Função para fechar o scanner
   const closeBarcodeScanner = () => {
     setIsScannerOpen(false);
   };
@@ -247,7 +324,7 @@ const StockExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
             <Button
               type="button"
               variant="secondary"
-              onClick={openBarcodeScanner} // Mudou aqui - agora abre o scanner
+              onClick={openBarcodeScanner}
               className="flex items-center max-w-52 justify-end gap-2"
             >
               <div className="flex gap-2">
@@ -257,11 +334,11 @@ const StockExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
             </Button>
 
             <FormSection title="Dados da Saída">
-              <Input
-                label="Data LCTO"
-                type="date"
-                {...register("dataLcto", { required: "Data é obrigatória" })}
-                error={errors.dataLcto}
+              <DateInput
+                label="Data de LCTO:"
+                name="dataLcto"
+                control={control}
+                error={errors?.dataLcto}
               />
               <SelectField
                 name="unidade"
@@ -289,7 +366,6 @@ const StockExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
               />
               <Input
                 label="Qtde Chapas"
-                type="number"
                 {...register("qtdeChapa", {
                   required: "Quantidade é obrigatória",
                   min: { value: 1, message: "Quantidade deve ser maior que 0" },
@@ -298,8 +374,6 @@ const StockExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
               />
               <Input
                 label="Altura Chapa"
-                type="number"
-                step="0.01"
                 {...register("alturaChapa", {
                   required: "Altura é obrigatória",
                 })}
@@ -308,8 +382,6 @@ const StockExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
               />
               <Input
                 label="Largura Chapa"
-                type="number"
-                step="0.01"
                 {...register("larguraChapa", {
                   required: "Largura é obrigatória",
                 })}
@@ -317,17 +389,13 @@ const StockExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
                 endIcon={<span>m</span>}
               />
               <Input
-                label="M² Utilizados"
-                type="number"
-                step="0.01"
+                label="M²"
                 {...register("m2", { required: "M² é obrigatório" })}
                 error={errors.m2}
                 endIcon={<span>m²</span>}
               />
               <Input
                 label="APR (%)"
-                type="number"
-                step="0.01"
                 {...register("apr", { required: "APR é obrigatório" })}
                 error={errors.apr}
                 endIcon={<span>%</span>}
@@ -353,24 +421,18 @@ const StockExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
 
                 <Input
                   label="Largura do Retalho"
-                  type="number"
-                  step="0.01"
                   {...register("larguraRetalho")}
                   endIcon={<span>m</span>}
                   readOnly
                 />
                 <Input
                   label="Altura do Retalho"
-                  type="number"
-                  step="0.01"
                   {...register("alturaRetalho")}
                   endIcon={<span>m</span>}
                   readOnly
                 />
                 <Input
                   label="M² do Retalho"
-                  type="number"
-                  step="0.01"
                   {...register("m2Retalho")}
                   endIcon={<span>m²</span>}
                   readOnly
@@ -378,7 +440,6 @@ const StockExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
 
                 <Input
                   label="Código de Barras"
-                  type="text"
                   {...register("codigoBarrasRetalho")}
                   readOnly
                 />
@@ -418,10 +479,11 @@ const StockExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
                   </div>
 
                   <FormSection title="Dados da Saída">
-                    <Input
-                      label="Data LCTO"
-                      type="date"
-                      {...register(`additionalItems.${index}.dataLcto`)}
+                    <DateInput
+                      label="Data de LCTO:"
+                      name="dataLcto"
+                      control={control}
+                      error={errors?.dataLcto}
                     />
                     <SelectField
                       name={`additionalItems.${index}.unidade`}
@@ -447,34 +509,25 @@ const StockExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
                   />
                   <Input
                     label="Qtde Chapas"
-                    type="number"
                     {...register(`additionalItems.${index}.qtdeChapa`)}
                   />
                   <Input
                     label="Altura Chapa"
-                    type="number"
-                    step="0.01"
                     {...register(`additionalItems.${index}.alturaChapa`)}
                     endIcon={<span>m</span>}
                   />
                   <Input
                     label="Largura Chapa"
-                    type="number"
-                    step="0.01"
                     {...register(`additionalItems.${index}.larguraChapa`)}
                     endIcon={<span>m</span>}
                   />
                   <Input
                     label="M²"
-                    type="number"
-                    step="0.01"
                     {...register(`additionalItems.${index}.m2`)}
                     endIcon={<span>m²</span>}
                   />
                   <Input
                     label="APR (%)"
-                    type="number"
-                    step="0.01"
                     {...register(`additionalItems.${index}.apr`)}
                     endIcon={<span>%</span>}
                   />
@@ -544,4 +597,4 @@ const StockExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
   );
 };
 
-export default StockExitModal;
+export default ExitModal;
