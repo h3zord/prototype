@@ -1,8 +1,11 @@
-import TestModal from "./modal/test";
+import EntryModal from "./modal/EntryModal";
+import DataTable from "../../../../components/ui/table/data-table/DataTable";
 import { useMemo } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { BiSolidEdit } from "react-icons/bi";
 import { PiPlusBold } from "react-icons/pi";
+import { useModal } from "../../../../hooks/useModal";
+import { Trash } from "lucide-react";
 import {
   IconButton,
   DataTableHeader,
@@ -18,7 +21,7 @@ const RecordingTable = () => {
   const { openModal, closeModal } = useModal();
 
   const handleCreateClick = () => {
-    openModal("createStorage", TestModal, {
+    openModal("createStorage", EntryModal, {
       onClose: () => closeModal("createStorage"),
     });
   };
@@ -485,7 +488,7 @@ const RecordingTable = () => {
             <Button onClick={handleCreateClick}>
               <div className="flex items-center justify-center gap-2">
                 <PiPlusBold />
-                <span>Incluir</span>
+                <span>Criar Entrada</span>
               </div>
             </Button>
 

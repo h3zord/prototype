@@ -1,7 +1,10 @@
-import TestModal from "./modal/test";
+import ExitModal from "./modal/ExitModal";
+import DataTable from "../../../../components/ui/table/data-table/DataTable";
 import { useMemo } from "react";
 import { ColumnDef } from "@tanstack/react-table";
+import { Trash } from "lucide-react";
 import { BiSolidEdit } from "react-icons/bi";
+import { useModal } from "../../../../hooks/useModal";
 import { PiPlusBold } from "react-icons/pi";
 import {
   IconButton,
@@ -17,7 +20,7 @@ const RecordingTable = () => {
   const { openModal, closeModal } = useModal();
 
   const handleCreateClick = () => {
-    openModal("createStorage", TestModal, {
+    openModal("createStorage", ExitModal, {
       onClose: () => closeModal("createStorage"),
     });
   };

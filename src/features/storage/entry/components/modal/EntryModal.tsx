@@ -1,3 +1,7 @@
+import CurrencyInputFixed from "../../../../../components/ui/form/CurrencyInput";
+import Textarea from "../../../../../components/ui/form/Textarea";
+import { FormProvider, useForm } from "react-hook-form";
+import { useState, useEffect } from "react";
 import {
   Modal,
   SelectField,
@@ -15,23 +19,39 @@ interface CreateUserModalProps {
   onClose: () => void;
 }
 
-const TestModal: React.FC<CreateUserModalProps> = ({ onClose }) => {
+const EntryModal: React.FC<CreateUserModalProps> = ({ onClose }) => {
   const methods = useForm();
   const {
     control,
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
   } = methods;
+
   const [isLoading, setIsLoading] = useState(false);
 
-  // Dados fake para as opções dos selects
+  const plateFormat = watch("plateFormat");
+  const plateQuantity = watch("plateQuantity");
+  const plateHeight = watch("plateHeight");
+  const plateWidth = watch("plateWidth");
+
   const companyOptions = [
-    { value: "1", label: "Master Print" },
-    { value: "2", label: "Plastimarau" },
-    { value: "3", label: "Plaszom" },
-    { value: "4", label: "Megalabel" },
-    { value: "5", label: "Gráfica Estrela" },
+    { value: "1", label: "Adhesive Label" },
+    { value: "2", label: "EmCasa" },
+    { value: "3", label: "Flexograv Farroupilha" },
+    { value: "4", label: "Flexograv RS" },
+    { value: "5", label: "Flexograv SP" },
+    { value: "6", label: "Gráfica Estrela" },
+    { value: "7", label: "Gualapack Brasil" },
+    { value: "8", label: "Master Print" },
+    { value: "9", label: "Megalabel" },
+    { value: "10", label: "Plásticos Itália" },
+    { value: "11", label: "Plastimarau" },
+    { value: "12", label: "Plaszom" },
+    { value: "13", label: "Gráfica Estrela" },
+    { value: "14", label: "Sebastian" },
   ];
 
   const unitOptions = [
@@ -45,7 +65,6 @@ const TestModal: React.FC<CreateUserModalProps> = ({ onClose }) => {
     setIsLoading(true);
     try {
       console.log("Dados do formulário:", data);
-      // Simular chamada da API
       await new Promise((resolve) => setTimeout(resolve, 2000));
       alert("Dados salvos com sucesso!");
       onClose();
@@ -192,7 +211,6 @@ const TestModal: React.FC<CreateUserModalProps> = ({ onClose }) => {
               </div>
             </FormSection>
 
-            {/* Botões de Ação */}
             <div className="flex justify-end gap-2 pt-4">
               <Button type="button" variant="secondary" onClick={onClose}>
                 Cancelar
@@ -208,4 +226,4 @@ const TestModal: React.FC<CreateUserModalProps> = ({ onClose }) => {
   );
 };
 
-export default TestModal;
+export default EntryModal;
