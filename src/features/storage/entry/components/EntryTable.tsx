@@ -1,21 +1,17 @@
 import EntryModal from "./modal/EntryModal";
 import DataTable from "../../../../components/ui/table/data-table/DataTable";
+import DateRangePicker from "../../../../features/dashboard/components/Filters/DateRangePicker";
 import { useMemo } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { BiSolidEdit } from "react-icons/bi";
-import { PiPlusBold } from "react-icons/pi";
 import { useModal } from "../../../../hooks/useModal";
 import { Trash } from "lucide-react";
+import { PiPlusBold } from "react-icons/pi";
 import {
   IconButton,
   DataTableHeader,
   Button,
 } from "../../../../components/index";
-import { useModal } from "../../../../hooks/useModal";
-import DataTable from "../../../../components/ui/table/data-table/DataTable";
-import { Trash } from "lucide-react";
-import BarCodeModal from "./modal/barcode";
-import DateRangePicker from "../../../../features/dashboard/components/Filters/DateRangePicker";
 
 const RecordingTable = () => {
   const { openModal, closeModal } = useModal();
@@ -23,12 +19,6 @@ const RecordingTable = () => {
   const handleCreateClick = () => {
     openModal("createStorage", EntryModal, {
       onClose: () => closeModal("createStorage"),
-    });
-  };
-
-  const handleCreateBarCodeClick = () => {
-    openModal("createBarCode", BarCodeModal, {
-      onClose: () => closeModal("createBarCode"),
     });
   };
 

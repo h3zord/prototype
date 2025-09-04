@@ -1,27 +1,20 @@
-import TestModal from "./modal/test";
+import BarCodeModal from "./modal/barcode";
+import DateRangePicker from "../../../dashboard/components/Filters/DateRangePicker";
+import DataTable from "../../../../components/ui/table/data-table/DataTable";
 import { useMemo } from "react";
 import { ColumnDef } from "@tanstack/react-table";
+import { useModal } from "../../../../hooks/useModal";
 import { BiSolidEdit } from "react-icons/bi";
 import { PiPlusBold } from "react-icons/pi";
+import { Trash } from "lucide-react";
 import {
   IconButton,
   DataTableHeader,
   Button,
 } from "../../../../components/index";
-import { useModal } from "../../../../hooks/useModal";
-import DataTable from "../../../../components/ui/table/data-table/DataTable";
-import { Trash } from "lucide-react";
-import BarCodeModal from "./modal/barcode";
-import DateRangePicker from "../../../dashboard/components/Filters/DateRangePicker";
 
 const CodeTable = () => {
   const { openModal, closeModal } = useModal();
-
-  const handleCreateClick = () => {
-    openModal("createStorage", TestModal, {
-      onClose: () => closeModal("createStorage"),
-    });
-  };
 
   const handleCreateBarCodeClick = () => {
     openModal("createBarCode", BarCodeModal, {
@@ -210,7 +203,7 @@ const CodeTable = () => {
     baseColumns.push({
       id: "actions",
       header: "Ações",
-      cell: ({ row }) => (
+      cell: () => (
         <div className="flex items-center gap-1">
           <IconButton
             icon={<BiSolidEdit size={18} className="text-white outline-none" />}
@@ -233,7 +226,7 @@ const CodeTable = () => {
             <Button onClick={handleCreateBarCodeClick}>
               <div className="flex items-center justify-center gap-2">
                 <PiPlusBold />
-                <span>Cadastrar Código de barra</span>
+                <span>Cadastrar Código de barras</span>
               </div>
             </Button>
             <DateRangePicker />

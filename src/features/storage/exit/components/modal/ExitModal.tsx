@@ -1,5 +1,4 @@
 import BarcodeScanner from "../BarcodeScanner";
-import DateInput from "../../../../../components/ui/form/DateInput";
 import { Plus, Minus, Scan } from "lucide-react";
 import { useState, useEffect } from "react";
 import { FormProvider, useForm, useFieldArray } from "react-hook-form";
@@ -141,7 +140,7 @@ const ExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
       } else {
         formatValue = tipoSaida;
         selectedOption = tipoSaidaOptions.find(
-          (option) => option.value === formatValue
+          (option) => option.value === formatValue,
         );
       }
 
@@ -250,7 +249,7 @@ const ExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
     setValue("m2", m2Value);
 
     alert(
-      `Código de barras lido com sucesso!\nCódigo: ${barcodeData}\nDados preenchidos automaticamente.`
+      `Código de barras lido com sucesso!\nCódigo: ${barcodeData}\nDados preenchidos automaticamente.`,
     );
   };
 

@@ -1,3 +1,5 @@
+import { FormProvider, useForm } from "react-hook-form";
+import { useState } from "react";
 import {
   Modal,
   SelectField,
@@ -5,9 +7,6 @@ import {
   Button,
   FormSection,
 } from "../../../../../components/index";
-import Textarea from "../../../../../components/ui/form/Textarea";
-import { FormProvider, useForm } from "react-hook-form";
-import { useState } from "react";
 
 interface CreateUserModalProps {
   onClose: () => void;
@@ -17,13 +16,11 @@ const BarCodeModal: React.FC<CreateUserModalProps> = ({ onClose }) => {
   const methods = useForm();
   const {
     control,
-    register,
     handleSubmit,
     formState: { errors },
   } = methods;
   const [isLoading, setIsLoading] = useState(false);
 
-  // Dados fake para as opções dos selects
   const companyOptions = [
     { value: "1", label: "Master Print" },
     { value: "2", label: "Plastimarau" },
@@ -80,7 +77,7 @@ const BarCodeModal: React.FC<CreateUserModalProps> = ({ onClose }) => {
   return (
     <>
       <Modal
-        title="Cadastro de código de barra"
+        title="Cadastro de Código de Barras"
         onClose={onClose}
         className="max-w-6xl"
       >
@@ -92,10 +89,8 @@ const BarCodeModal: React.FC<CreateUserModalProps> = ({ onClose }) => {
             {/* Dados Gerais */}
             <FormSection title="Dados Gerais">
               <Input
-                name="manufacturer"
-                label="cód. bar"
-                control={control}
-                options={manufacturerOptions}
+                name="barCode"
+                label="Código de barras"
                 error={errors.manufacturer}
               />
               <SelectField
@@ -106,10 +101,10 @@ const BarCodeModal: React.FC<CreateUserModalProps> = ({ onClose }) => {
                 error={errors.manufacturer}
               />
               <SelectField
-                name="manufacturer"
+                name="thickness"
                 label="Espessura"
                 control={control}
-                options={manufacturerOptions}
+                options={plateThicknessOptions}
                 error={errors.manufacturer}
               />
               <SelectField
@@ -120,17 +115,16 @@ const BarCodeModal: React.FC<CreateUserModalProps> = ({ onClose }) => {
                 error={errors.manufacturer}
               />
               <SelectField
-                name="manufacturer"
+                name="model"
                 label="Formato"
                 control={control}
-                options={manufacturerOptions}
+                options={plateFormatOptions}
                 error={errors.manufacturer}
               />
               <Input
                 name="manufacturer"
                 label="m2"
                 control={control}
-                options={manufacturerOptions}
                 error={errors.manufacturer}
               />
 

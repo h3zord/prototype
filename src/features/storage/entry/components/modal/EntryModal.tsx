@@ -1,7 +1,8 @@
 import CurrencyInputFixed from "../../../../../components/ui/form/CurrencyInput";
 import Textarea from "../../../../../components/ui/form/Textarea";
+import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import { useState, useEffect } from "react";
+import { Scan } from "lucide-react";
 import {
   Modal,
   SelectField,
@@ -9,11 +10,6 @@ import {
   Button,
   FormSection,
 } from "../../../../../components/index";
-import Textarea from "../../../../../components/ui/form/Textarea";
-import { FormProvider, useForm } from "react-hook-form";
-import { useState } from "react";
-import CurrencyInputFixed from "../../../../../components/ui/form/CurrencyInput";
-import { Scan } from "lucide-react";
 
 interface CreateUserModalProps {
   onClose: () => void;
@@ -25,17 +21,10 @@ const EntryModal: React.FC<CreateUserModalProps> = ({ onClose }) => {
     control,
     register,
     handleSubmit,
-    watch,
-    setValue,
     formState: { errors },
   } = methods;
 
   const [isLoading, setIsLoading] = useState(false);
-
-  const plateFormat = watch("plateFormat");
-  const plateQuantity = watch("plateQuantity");
-  const plateHeight = watch("plateHeight");
-  const plateWidth = watch("plateWidth");
 
   const companyOptions = [
     { value: "1", label: "Adhesive Label" },
