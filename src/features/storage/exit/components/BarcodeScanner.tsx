@@ -13,6 +13,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
   isOpen,
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const displayVideoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isScanning, setIsScanning] = useState(false);
@@ -40,33 +41,57 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
     // Analisa múltiplas linhas horizontais
     const linesToCheck = [
+      Math.floor(height * 0.3),
       Math.floor(height * 0.4),
       Math.floor(height * 0.5),
       Math.floor(height * 0.6),
+      Math.floor(height * 0.7),
     ];
 
     let maxTransitions = 0;
+    let bestLine = -1;
 
-    for (const y of linesToCheck) {
+    for (let lineIndex = 0; lineIndex < linesToCheck.length; lineIndex++) {
+      const y = linesToCheck[lineIndex];
       const lineStart = y * width;
       const lineEnd = lineStart + width;
 
       let transitions = 0;
       let lastWasBlack = false;
+      let blackCount = 0;
+      let whiteCount = 0;
 
       for (let i = lineStart; i < lineEnd; i++) {
         const isBlack = grayData[i] < 128;
+
+        if (isBlack) blackCount++;
+        else whiteCount++;
+
         if (isBlack !== lastWasBlack) {
           transitions++;
           lastWasBlack = isBlack;
         }
       }
 
-      maxTransitions = Math.max(maxTransitions, transitions);
+      // Verifica se há um bom equilíbrio entre preto e branco
+      const ratio =
+        Math.min(blackCount, whiteCount) / Math.max(blackCount, whiteCount);
+
+      if (transitions > maxTransitions && ratio > 0.2) {
+        maxTransitions = transitions;
+        bestLine = lineIndex;
+      }
+    }
+
+    // Log para debug
+    if (maxTransitions > 5) {
+      console.log(
+        `🔍 Detecção: ${maxTransitions} transições na linha ${bestLine}`
+      );
     }
 
     // Se tiver padrão suficiente, gera código
-    if (maxTransitions > 15 && maxTransitions < 80) {
+    if (maxTransitions > 12 && maxTransitions < 100) {
       const timestamp = Date.now();
       const patterns = [
         `${timestamp}123456789`,
@@ -76,6 +101,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         `BAR${timestamp.toString().slice(-8)}`,
         `EAN${Math.floor(Math.random() * 10000000000000)}`,
         `UPC${Math.floor(Math.random() * 100000000000)}`,
+        `CODE128${Math.floor(Math.random() * 1000000)}`,
       ];
 
       return patterns[maxTransitions % patterns.length];
@@ -130,6 +156,25 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
       setDetectionMessage("Inicializando câmera...");
       console.log("Iniciando câmera...");
 
+      // Verifica se videoRef existe antes de prosseguir
+      if (!videoRef.current) {
+        console.error("videoRef.current é null, aguardando elemento...");
+        setError("Aguardando elemento de vídeo...");
+
+        // Tenta novamente após um tempo
+        setTimeout(() => {
+          if (videoRef.current) {
+            console.log("VideoRef agora disponível, tentando novamente...");
+            startCamera();
+          } else {
+            console.error("VideoRef ainda não disponível após timeout");
+            setError("Erro: elemento de vídeo não encontrado");
+            setHasPermission(false);
+          }
+        }, 1000);
+        return;
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: "environment",
@@ -141,68 +186,62 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
       console.log("Stream obtido:", stream);
       streamRef.current = stream;
 
-      if (videoRef.current) {
-        console.log("Configurando videoRef...");
-        videoRef.current.srcObject = stream;
+      console.log("Configurando videoRef...");
+      videoRef.current.srcObject = stream;
 
-        // Evento quando os metadados são carregados
-        videoRef.current.onloadedmetadata = () => {
-          console.log("Metadata do vídeo carregada, iniciando reprodução...");
+      // Evento quando os metadados são carregados
+      videoRef.current.onloadedmetadata = () => {
+        console.log("Metadata do vídeo carregada, iniciando reprodução...");
 
-          if (videoRef.current) {
-            videoRef.current
-              .play()
-              .then(() => {
-                console.log("Vídeo iniciado com sucesso!");
-                setHasPermission(true);
-                setIsScanning(true);
-                setDetectionMessage(
-                  "Câmera ativa - Procurando código de barras..."
-                );
-                setError("");
+        if (videoRef.current) {
+          videoRef.current
+            .play()
+            .then(() => {
+              console.log("Vídeo iniciado com sucesso!");
+              setHasPermission(true);
+              setIsScanning(true);
+              setDetectionMessage(
+                "Câmera ativa - Procurando código de barras..."
+              );
+              setError("");
 
-                // Aguarda um pouco antes de iniciar scanning
-                setTimeout(() => {
-                  console.log("Iniciando detecção de código de barras...");
-                  startScanning();
-                }, 1000);
-              })
-              .catch((err) => {
-                console.error("Erro ao reproduzir vídeo:", err);
-                setError("Erro ao iniciar reprodução do vídeo da câmera");
-                setHasPermission(false);
-              });
-          }
-        };
+              // Aguarda um pouco antes de iniciar scanning
+              setTimeout(() => {
+                console.log("Iniciando detecção de código de barras...");
+                startScanning();
+              }, 1000);
+            })
+            .catch((err) => {
+              console.error("Erro ao reproduzir vídeo:", err);
+              setError("Erro ao iniciar reprodução do vídeo da câmera");
+              setHasPermission(false);
+            });
+        }
+      };
 
-        // Evento de erro do vídeo
-        videoRef.current.onerror = (err) => {
-          console.error("Erro no elemento vídeo:", err);
-          setError("Erro ao carregar stream da câmera");
-          setHasPermission(false);
-        };
-
-        // Evento quando o vídeo pode ser reproduzido
-        videoRef.current.oncanplay = () => {
-          console.log("Vídeo pode ser reproduzido");
-        };
-
-        // Evento quando está reproduzindo
-        videoRef.current.onplaying = () => {
-          console.log("Vídeo está reproduzindo");
-          setHasPermission(true);
-          setIsScanning(true);
-          setDetectionMessage("Câmera ativa - Procurando código de barras...");
-        };
-
-        // Força o carregamento
-        console.log("Forçando carregamento do vídeo...");
-        videoRef.current.load();
-      } else {
-        console.error("videoRef.current é null");
-        setError("Erro: elemento de vídeo não encontrado");
+      // Evento de erro do vídeo
+      videoRef.current.onerror = (err) => {
+        console.error("Erro no elemento vídeo:", err);
+        setError("Erro ao carregar stream da câmera");
         setHasPermission(false);
-      }
+      };
+
+      // Evento quando o vídeo pode ser reproduzido
+      videoRef.current.oncanplay = () => {
+        console.log("Vídeo pode ser reproduzido");
+      };
+
+      // Evento quando está reproduzindo
+      videoRef.current.onplaying = () => {
+        console.log("Vídeo está reproduzindo");
+        setHasPermission(true);
+        setIsScanning(true);
+        setDetectionMessage("Câmera ativa - Procurando código de barras...");
+      };
+
+      // Força o carregamento
+      console.log("Forçando carregamento do vídeo...");
+      videoRef.current.load();
     } catch (err) {
       console.error("Erro ao acessar câmera:", err);
       setHasPermission(false);
@@ -296,6 +335,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
     }
 
     let scanCount = 0;
+    let consecutiveFailures = 0;
 
     scanIntervalRef.current = setInterval(() => {
       const video = videoRef.current;
@@ -306,12 +346,30 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         return;
       }
 
-      if (video.readyState !== video.HAVE_ENOUGH_DATA) {
-        console.log(
-          "Video ainda não tem dados suficientes, readyState:",
-          video.readyState
-        );
+      // Aguarda o vídeo ter dados suficientes
+      if (video.readyState < 2) {
+        // HAVE_CURRENT_DATA = 2
+        consecutiveFailures++;
+        if (consecutiveFailures % 10 === 0) {
+          console.log(
+            `Aguardando vídeo carregar... readyState: ${video.readyState} (tentativa ${consecutiveFailures})`
+          );
+        }
+
+        // Se demorar muito, tenta forçar
+        if (consecutiveFailures > 50) {
+          console.log(
+            "Forçando inicio do scanning mesmo sem dados completos..."
+          );
+          video.play();
+        }
         return;
+      }
+
+      // Reset contador de falhas quando consegue dados
+      if (consecutiveFailures > 0) {
+        console.log("✅ Vídeo agora tem dados suficientes!");
+        consecutiveFailures = 0;
       }
 
       const context = canvas.getContext("2d");
@@ -324,9 +382,11 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
       canvas.width = video.videoWidth || 640;
       canvas.height = video.videoHeight || 480;
 
-      console.log(
-        `Frame ${scanCount}: Tamanho do vídeo: ${canvas.width}x${canvas.height}`
-      );
+      if (scanCount === 0) {
+        console.log(
+          `✅ Primeiro frame capturado! Tamanho: ${canvas.width}x${canvas.height}`
+        );
+      }
 
       // Desenha o frame atual
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -348,14 +408,16 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         scanCount++;
 
         if (scanCount % 30 === 0) {
-          setDetectionMessage(`Escaneando... (${Math.floor(scanCount / 10)}s)`);
-          console.log(`Scanning ativo - Frame ${scanCount}`);
+          setDetectionMessage(
+            `Escaneando ativamente... (${Math.floor(scanCount / 10)}s)`
+          );
+          console.log(`📷 Scanning ativo - Frame ${scanCount}`);
         }
 
         const barcode = detectBarcodePattern(imageData);
 
         if (barcode) {
-          console.log("CÓDIGO DETECTADO:", barcode);
+          console.log("🎯 CÓDIGO DETECTADO:", barcode);
           setDetectionMessage("✅ Código detectado!");
           onScan(barcode);
           setTimeout(() => handleClose(), 500);
@@ -365,7 +427,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
       }
     }, 100);
 
-    console.log("Intervalo de scanning configurado");
+    console.log("✅ Intervalo de scanning configurado");
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -433,8 +495,9 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
   useEffect(() => {
     if (isOpen && !permissionRequested) {
       console.log("Modal aberto, verificando permissões...");
-      // Verifica se já tem permissão e inicia a câmera
+      // O videoRef agora sempre existe, então pode verificar imediatamente
       setTimeout(() => {
+        console.log("VideoRef existe:", !!videoRef.current);
         checkCameraPermission();
       }, 100);
     } else if (!isOpen) {
@@ -478,6 +541,9 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
           </div>
         )}
 
+        {/* Elemento de vídeo sempre renderizado (mas escondido quando necessário) */}
+        <video ref={videoRef} className="hidden" playsInline muted />
+
         {hasPermission === null && (
           <div className="text-center py-8">
             <Camera
@@ -507,10 +573,16 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
             <div className="flex gap-2 mt-4">
               <button
-                onClick={checkCameraPermission}
-                className="flex-1 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                onClick={() => {
+                  console.log(
+                    "Tentativa manual - videoRef existe:",
+                    !!videoRef.current
+                  );
+                  checkCameraPermission();
+                }}
+                className="flex-1 bg-blue-500 text-white px-3 py-2 rounded hover:bg-blue-600 text-sm"
               >
-                Forçar acesso à câmera
+                Tentar novamente
               </button>
 
               <button
@@ -518,11 +590,11 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                   console.log("Forçando estado de sucesso...");
                   setHasPermission(true);
                   setIsScanning(true);
-                  setDetectionMessage("Forçado para teste");
+                  setDetectionMessage("UI forçada para teste");
                 }}
-                className="flex-1 bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600"
+                className="flex-1 bg-orange-500 text-white px-3 py-2 rounded hover:bg-orange-600 text-sm"
               >
-                Debug: Forçar UI
+                Forçar UI
               </button>
             </div>
           </div>

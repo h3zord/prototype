@@ -29,6 +29,7 @@ enum routes {
   DOCS = "/docs",
   ENTRY = "/storage/entry",
   EXIT = "/storage/exit",
+  COD = "/storage/cod",
 }
 
 export default routes;

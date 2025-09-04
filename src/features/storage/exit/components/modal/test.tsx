@@ -234,11 +234,7 @@ const StockExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
 
   return (
     <>
-      <Modal
-        title="Inclusão de Estoque - Saída"
-        onClose={onClose}
-        className="max-w-6xl"
-      >
+      <Modal title="Saída de Estoque" onClose={onClose} className="max-w-6xl">
         <FormProvider {...methods}>
           <form
             onSubmit={handleSubmit(onSubmit)}
@@ -257,6 +253,13 @@ const StockExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
             </Button>
 
             <FormSection title="Dados da Saída">
+              <SelectField
+                name="unit"
+                label="Código de barra"
+                control={control}
+                options={unitOptions}
+                error={errors.unit}
+              />
               <Input
                 label="Data LCTO"
                 type="date"
@@ -270,23 +273,44 @@ const StockExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
                 options={unitOptions}
                 error={errors.unidade}
               />
+            </FormSection>
+
+            <FormSection title="Dados da caixa selecionada">
               <SelectField
-                name="tipoSaida"
-                label="Tipo Saída"
+                name="manufacturer"
+                label="Fabricante"
                 control={control}
-                options={tipoSaidaOptions}
-                error={errors.tipoSaida}
+                options={unitOptions}
+                disabled
               />
+              <SelectField
+                name="manufacturer"
+                label="Espessura"
+                control={control}
+                options={unitOptions}
+                disabled
+              />
+              <SelectField
+                name="manufacturer"
+                label="Modelo"
+                control={control}
+                options={unitOptions}
+                disabled
+              />
+              <SelectField
+                name="manufacturer"
+                label="Formato"
+                control={control}
+                options={unitOptions}
+                disabled
+              />
+              <Input name="manufacturer" label="m2" disabled />
+
+              <Input name="manufacturer" label="Largura chapa" disabled />
+              <Input name="manufacturer" label="Altura chapa" disabled />
             </FormSection>
 
             <FormSection title="Dimensões e Quantidade">
-              <SelectField
-                name="espessura"
-                label="Espessura"
-                control={control}
-                options={plateThicknessOptions}
-                error={errors.espessura}
-              />
               <Input
                 label="Qtde Chapas"
                 type="number"
@@ -416,35 +440,9 @@ const StockExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
                       </div>
                     </Button>
                   </div>
-
-                  <FormSection title="Dados da Saída">
-                    <Input
-                      label="Data LCTO"
-                      type="date"
-                      {...register(`additionalItems.${index}.dataLcto`)}
-                    />
-                    <SelectField
-                      name={`additionalItems.${index}.unidade`}
-                      label="Unidade"
-                      control={control}
-                      options={unitOptions}
-                    />
-                    <SelectField
-                      name={`additionalItems.${index}.tipoSaida`}
-                      label="Tipo Saída"
-                      control={control}
-                      options={tipoSaidaOptions}
-                    />
-                  </FormSection>
                 </div>
 
                 <FormSection title="Dimensões e Quantidade">
-                  <SelectField
-                    name={`additionalItems.${index}.espessura`}
-                    label="Espessura"
-                    control={control}
-                    options={plateThicknessOptions}
-                  />
                   <Input
                     label="Qtde Chapas"
                     type="number"

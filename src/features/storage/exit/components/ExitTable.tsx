@@ -11,6 +11,7 @@ import {
 import { useModal } from "../../../../hooks/useModal";
 import DataTable from "../../../../components/ui/table/data-table/DataTable";
 import { Trash } from "lucide-react";
+import DateRangePicker from "../../../../features/dashboard/components/Filters/DateRangePicker";
 
 const RecordingTable = () => {
   const { openModal, closeModal } = useModal();
@@ -455,22 +456,7 @@ const RecordingTable = () => {
                 <span>Criar Saída</span>
               </div>
             </Button>
-            <div className="text-[12px] text-[white] flex items-center justify-center gap-1">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#facc15"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M12 9v4m0 4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-              </svg>
-              Exibindo resultados do perído{" "}
-              <strong className="text-[#fde047]">01/07/25 à 18/07/25</strong>
-            </div>
+            <DateRangePicker />
           </div>,
         ]}
       />

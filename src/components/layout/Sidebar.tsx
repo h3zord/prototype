@@ -113,6 +113,11 @@ const ALL_INVOICE_LINKS: ServiceLink[] = [
 
 const ALL_STORAGE_LINKS: ServiceLink[] = [
   {
+    name: "Cód. de barras",
+    link: routes.COD,
+    route: "/storage/cod",
+  },
+  {
     name: "Ent. de Estoque",
     link: routes.ENTRY,
     route: "/storage/entry",

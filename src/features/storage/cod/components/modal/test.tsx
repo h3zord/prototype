@@ -82,20 +82,19 @@ const TestModal: React.FC<CreateUserModalProps> = ({ onClose }) => {
             {/* Dados Gerais */}
             <FormSection title="Dados Gerais">
               <SelectField
-                name="unit"
-                label="Código de barra"
-                control={control}
-                options={unitOptions}
-                error={errors.unit}
-              />
-              <SelectField
                 name="company"
                 label="Cliente"
                 control={control}
                 options={companyOptions}
                 error={errors.company}
               />
-
+              <SelectField
+                name="unit"
+                label="Código de barra"
+                control={control}
+                options={unitOptions}
+                error={errors.unit}
+              />
               <SelectField
                 name="unit"
                 label="Unidade"
@@ -131,51 +130,6 @@ const TestModal: React.FC<CreateUserModalProps> = ({ onClose }) => {
                 name="unit"
                 label="Cotação do dolar"
                 control={control}
-                options={unitOptions}
-                error={errors.unit}
-              />
-            </FormSection>
-
-            <FormSection title="Dados da caixa selecionada">
-              <SelectField
-                name="manufacturer"
-                label="Fabricante"
-                control={control}
-                options={unitOptions}
-                disabled
-              />
-              <SelectField
-                name="manufacturer"
-                label="Espessura"
-                control={control}
-                options={unitOptions}
-                disabled
-              />
-              <SelectField
-                name="manufacturer"
-                label="Modelo"
-                control={control}
-                options={unitOptions}
-                disabled
-              />
-              <SelectField
-                name="manufacturer"
-                label="Formato"
-                control={control}
-                options={unitOptions}
-                disabled
-              />
-              <Input name="manufacturer" label="m2" disabled />
-
-              <Input name="manufacturer" label="Largura chapa" disabled />
-              <Input name="manufacturer" label="Altura chapa" disabled />
-
-              <Input
-                name="unit"
-                label="Quantidade de chapas"
-                control={control}
-                type="number"
-                disabled
                 options={unitOptions}
                 error={errors.unit}
               />

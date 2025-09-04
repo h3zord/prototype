@@ -23,6 +23,7 @@ import PermissionsPage from "../features/permissions/permissionsPage";
 import ServiceOrderPage from "../features/serviceOrder/components/ServiceOrderPage";
 import EntryPage from "../features/storage/entry/components/EntryPage";
 import ExitPage from "../features/storage/exit/components/ExitPage";
+import CodePage from "../features/storage/cod/components/CodePage";
 
 function AppRouter() {
   return (
@@ -39,6 +40,7 @@ function AppRouter() {
         <Route path={routes.INVOICE} element={<InvoicePage />} />
         <Route path={routes.REPLACEMENTS} element={<ReplacementsPage />} />
         <Route path={routes.PERMISSIONS} element={<PermissionsPage />} />
+        <Route path={routes.COD} element={<CodePage />} />
         <Route path={routes.ENTRY} element={<EntryPage />} />
         <Route path={routes.EXIT} element={<ExitPage />} />
 
