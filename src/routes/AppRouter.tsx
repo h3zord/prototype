@@ -1,4 +1,3 @@
-import { Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./ProtectRouter";
 import routes from "./routes";
 import UsersPage from "../features/users/components/UsersPage";
@@ -23,7 +22,10 @@ import PermissionsPage from "../features/permissions/permissionsPage";
 import ServiceOrderPage from "../features/serviceOrder/components/ServiceOrderPage";
 import EntryPage from "../features/storage/entry/components/EntryPage";
 import ExitPage from "../features/storage/exit/components/ExitPage";
-import CodePage from "../features/storage/barCode/components/CodePage";
+import CodePage from "../features/storage/code/components/CodePage";
+import GeneralPage from "../features/storage/general/components/GeneralPage";
+import ThirdPage from "../features/storage/third/components/ThirdPage";
+import { Navigate, Route, Routes } from "react-router-dom";
 
 function AppRouter() {
   return (
@@ -40,9 +42,11 @@ function AppRouter() {
         <Route path={routes.INVOICE} element={<InvoicePage />} />
         <Route path={routes.REPLACEMENTS} element={<ReplacementsPage />} />
         <Route path={routes.PERMISSIONS} element={<PermissionsPage />} />
-        <Route path={routes.COD} element={<CodePage />} />
+        <Route path={routes.CODE} element={<CodePage />} />
         <Route path={routes.ENTRY} element={<EntryPage />} />
         <Route path={routes.EXIT} element={<ExitPage />} />
+        <Route path={routes.GENERAL} element={<GeneralPage />} />
+        <Route path={routes.THIRD} element={<ThirdPage />} />
 
         <Route
           path={routes.CUSTOMER_PRINTER}

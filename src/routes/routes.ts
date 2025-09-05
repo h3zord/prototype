@@ -29,7 +29,9 @@ enum routes {
   DOCS = "/docs",
   ENTRY = "/storage/entry",
   EXIT = "/storage/exit",
-  COD = "/storage/cod",
+  CODE = "/storage/code",
+  GENERAL = "/storage/general",
+  THIRD = "/storage/third",
 }
 
 export default routes;

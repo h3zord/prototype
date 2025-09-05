@@ -34,7 +34,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
     const grayData: number[] = [];
     for (let i = 0; i < data.length; i += 4) {
       const gray = Math.round(
-        0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]
+        0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2],
       );
       grayData.push(gray);
     }
@@ -86,7 +86,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
     // Log para debug
     if (maxTransitions > 5) {
       console.log(
-        `🔍 Detecção: ${maxTransitions} transições na linha ${bestLine}`
+        `🔍 Detecção: ${maxTransitions} transições na linha ${bestLine}`,
       );
     }
 
@@ -126,7 +126,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         } else if (permission.state === "denied") {
           setHasPermission(false);
           setError(
-            "Permissão de câmera negada. Clique no ícone de câmera na barra de endereços e permita o acesso."
+            "Permissão de câmera negada. Clique no ícone de câmera na barra de endereços e permita o acesso.",
           );
           return;
         }
@@ -201,7 +201,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
               setHasPermission(true);
               setIsScanning(true);
               setDetectionMessage(
-                "Câmera ativa - Procurando código de barras..."
+                "Câmera ativa - Procurando código de barras...",
               );
               setError("");
 
@@ -250,22 +250,22 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         switch (err.name) {
           case "NotAllowedError":
             setError(
-              "Permissão negada. Clique no ícone de câmera na barra de endereços do navegador e permita o acesso."
+              "Permissão negada. Clique no ícone de câmera na barra de endereços do navegador e permita o acesso.",
             );
             break;
           case "NotFoundError":
             setError(
-              "Nenhuma câmera encontrada. Use uma das opções alternativas abaixo."
+              "Nenhuma câmera encontrada. Use uma das opções alternativas abaixo.",
             );
             break;
           case "NotReadableError":
             setError(
-              "Câmera está sendo usada por outro aplicativo. Feche outros apps que usam câmera e tente novamente."
+              "Câmera está sendo usada por outro aplicativo. Feche outros apps que usam câmera e tente novamente.",
             );
             break;
           case "OverconstrainedError":
             setError(
-              "Configuração de câmera não suportada. Tentando configuração básica..."
+              "Configuração de câmera não suportada. Tentando configuração básica...",
             );
             setTimeout(() => tryBasicCamera(), 1000);
             break;
@@ -302,7 +302,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
     } catch (err) {
       console.error("Erro com configuração básica:", err);
       setError(
-        "Não foi possível acessar a câmera. Use as opções alternativas."
+        "Não foi possível acessar a câmera. Use as opções alternativas.",
       );
       setHasPermission(false);
     }
@@ -352,14 +352,14 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         consecutiveFailures++;
         if (consecutiveFailures % 10 === 0) {
           console.log(
-            `Aguardando vídeo carregar... readyState: ${video.readyState} (tentativa ${consecutiveFailures})`
+            `Aguardando vídeo carregar... readyState: ${video.readyState} (tentativa ${consecutiveFailures})`,
           );
         }
 
         // Se demorar muito, tenta forçar
         if (consecutiveFailures > 50) {
           console.log(
-            "Forçando inicio do scanning mesmo sem dados completos..."
+            "Forçando inicio do scanning mesmo sem dados completos...",
           );
           video.play();
         }
@@ -384,7 +384,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
       if (scanCount === 0) {
         console.log(
-          `✅ Primeiro frame capturado! Tamanho: ${canvas.width}x${canvas.height}`
+          `✅ Primeiro frame capturado! Tamanho: ${canvas.width}x${canvas.height}`,
         );
       }
 
@@ -402,14 +402,14 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
           Math.max(0, centerX - scanWidth / 2),
           Math.max(0, centerY - scanHeight / 2),
           scanWidth,
-          scanHeight
+          scanHeight,
         );
 
         scanCount++;
 
         if (scanCount % 30 === 0) {
           setDetectionMessage(
-            `Escaneando ativamente... (${Math.floor(scanCount / 10)}s)`
+            `Escaneando ativamente... (${Math.floor(scanCount / 10)}s)`,
           );
           console.log(`📷 Scanning ativo - Frame ${scanCount}`);
         }
@@ -452,7 +452,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
           0,
           0,
           canvas.width,
-          canvas.height
+          canvas.height,
         );
         const barcode = detectBarcodePattern(imageData);
 
@@ -461,7 +461,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
           handleClose();
         } else {
           alert(
-            "Nenhum código de barras detectado na imagem. Tente uma imagem mais clara."
+            "Nenhum código de barras detectado na imagem. Tente uma imagem mais clara.",
           );
         }
       };
@@ -576,7 +576,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                 onClick={() => {
                   console.log(
                     "Tentativa manual - videoRef existe:",
-                    !!videoRef.current
+                    !!videoRef.current,
                   );
                   checkCameraPermission();
                 }}

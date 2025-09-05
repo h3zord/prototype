@@ -1,12 +1,12 @@
 import DefaultPageContainer from "../../../../components/layout/DefaultPageContainer";
-import ExitTable from "./ExitTable";
+import ThirdTable from "./ThirdTable";
 
-const ExitPage = () => {
+const ThirdPage = () => {
   return (
     <DefaultPageContainer>
-      <ExitTable />
+      <ThirdTable />
     </DefaultPageContainer>
   );
 };
 
-export default ExitPage;
+export default ThirdPage;

@@ -3,7 +3,7 @@ import { useMemo, useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { Scan } from "lucide-react";
 import { BarCodeData, useBarCode } from "../../../code/context/CodeContext";
-import { EntryData } from "../context/StockEntryContext";
+import { EntryData } from "src/features/storage/entry/components/context/StockEntryContext";
 import {
   Modal,
   SelectField,
@@ -19,7 +19,7 @@ interface EntryModalProps {
   onUpdate?: (id: number, data: Partial<EntryData>) => void;
 }
 
-const EntryModal: React.FC<EntryModalProps> = ({
+const ThirdModal: React.FC<EntryModalProps> = ({
   onClose,
   onSubmit: onSubmitProp,
   entryToEdit,
@@ -41,14 +41,8 @@ const EntryModal: React.FC<EntryModalProps> = ({
     }));
   }, [barCodes]);
 
-  const companyOptions = [
-    { value: "1", label: "Adhesive Label" },
-    { value: "2", label: "Trombini" },
-  ];
-  const unitOptions = [
-    { value: "1", label: "POA" },
-    { value: "2", label: "FRR" },
-  ];
+  const companyOptions = [{ value: "1", label: "Adhesive Label" }];
+  const unitOptions = [{ value: "1", label: "POA" }];
 
   useEffect(() => {
     if (isEditing && entryToEdit) {
@@ -213,4 +207,4 @@ const EntryModal: React.FC<EntryModalProps> = ({
   );
 };
 
-export default EntryModal;
+export default ThirdModal;

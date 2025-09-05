@@ -331,10 +331,9 @@ const ExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
             <FormSection title="Dados da Saída">
               <SelectField
                 name="unit"
-                label="Código de barra"
+                label="Código de barras"
                 control={control}
                 options={unitOptions}
-                error={errors.unit}
               />
               <Input
                 label="Data LCTO"

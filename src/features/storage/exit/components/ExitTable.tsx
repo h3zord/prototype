@@ -13,7 +13,7 @@ import DataTable from "../../../../components/ui/table/data-table/DataTable";
 import { Trash } from "lucide-react";
 import DateRangePicker from "../../../../features/dashboard/components/Filters/DateRangePicker";
 
-const RecordingTable = () => {
+const ExitTable = () => {
   const { openModal, closeModal } = useModal();
 
   const handleCreateClick = () => {
@@ -474,4 +474,4 @@ const RecordingTable = () => {
   );
 };
 
-export default RecordingTable;
+export default ExitTable;

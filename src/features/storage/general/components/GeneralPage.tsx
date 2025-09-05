@@ -1,12 +1,12 @@
 import DefaultPageContainer from "../../../../components/layout/DefaultPageContainer";
-import ExitTable from "./ExitTable";
+import GeneralTable from "./GeneralTable";
 
-const ExitPage = () => {
+const GeneralPage = () => {
   return (
     <DefaultPageContainer>
-      <ExitTable />
+      <GeneralTable />
     </DefaultPageContainer>
   );
 };
 
-export default ExitPage;
+export default GeneralPage;
