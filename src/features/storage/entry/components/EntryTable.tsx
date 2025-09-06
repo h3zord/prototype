@@ -212,16 +212,19 @@ const EntryTable = () => {
     <>
       <DataTableHeader
         actions={[
-          <div
-            className="flex items-center w-full justify-between"
-            key="actions"
-          >
+          <div className="flex items-center gap-4" key="actions">
             <Button onClick={handleCreateClick}>
               <div className="flex items-center justify-center gap-2">
                 <PiPlusBold />
                 <span>Cadastrar Entrada</span>
               </div>
             </Button>
+          </div>,
+          <div className="bg-yellow-600/20 border border-yellow-600 rounded-lg p-2">
+            <h4 className="font-semibold text-yellow-200 text-xs">
+              Movimentações de entrada irão incrementar no estoque geral e no
+              estoque de terceiros.
+            </h4>
           </div>,
         ]}
         onSearchChange={() => {}}

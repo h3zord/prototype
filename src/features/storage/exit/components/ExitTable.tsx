@@ -197,16 +197,18 @@ const ExitTable = () => {
     <>
       <DataTableHeader
         actions={[
-          <div
-            className="flex items-center w-full justify-between"
-            key="header-actions"
-          >
+          <div className="flex items-center gap-4" key="header-actions">
             <Button onClick={handleCreateClick}>
               <div className="flex items-center justify-center gap-2">
                 <PiPlusBold />
                 <span>Cadastrar Saída</span>
               </div>
             </Button>
+            <div className="bg-yellow-600/20 border border-yellow-600 rounded-lg p-2">
+              <h4 className="font-semibold text-yellow-200 text-xs">
+                Movimentações de saída irão reduzir do estoque geral.
+              </h4>
+            </div>
           </div>,
         ]}
         onSearchChange={() => {}}
