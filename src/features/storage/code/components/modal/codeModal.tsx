@@ -1,4 +1,7 @@
 import { FormProvider, useForm } from "react-hook-form";
+import { useEffect } from "react";
+import { BarCodeData } from "../../context/CodeContext";
+import { toast } from "react-toastify";
 import {
   Modal,
   SelectField,
@@ -6,8 +9,6 @@ import {
   Button,
   FormSection,
 } from "../../../../../components/index";
-import { useEffect } from "react";
-import { BarCodeData } from "../../context/CodeContext";
 
 type FormData = Omit<BarCodeData, "id">;
 
@@ -145,12 +146,15 @@ const CodeModal: React.FC<CodeModalProps> = ({
     try {
       if (isEditing && barCode && onUpdate) {
         onUpdate(barCode.id, processedData);
+        toast.success("Código de barras atualizado com sucesso!");
       } else if (onSubmitProp) {
         onSubmitProp(processedData);
+        toast.success("Código de barras registrado com sucesso!");
       }
       onClose();
     } catch (error) {
       console.error("Erro ao salvar código de barras:", error);
+      toast.warning("Falha ao criar código de barras!");
     }
   };
 
@@ -204,7 +208,7 @@ const CodeModal: React.FC<CodeModalProps> = ({
               placeholder="Ex: 1,20"
             />
             <Input
-              label="Quantidade"
+              label="Quantidade de chapas"
               {...register("quantidade")}
               type="number"
             />
@@ -225,7 +229,7 @@ const CodeModal: React.FC<CodeModalProps> = ({
                 ? "Salvando..."
                 : isEditing
                   ? "Atualizar"
-                  : "Salvar"}
+                  : "Cadastrar"}
             </Button>
           </div>
         </form>

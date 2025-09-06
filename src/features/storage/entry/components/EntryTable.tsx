@@ -1,6 +1,6 @@
 import EntryModal from "./modal/EntryModal";
 import DataTable from "../../../../components/ui/table/data-table/DataTable";
-import DateRangePicker from "../../../../features/dashboard/components/Filters/DateRangePicker";
+import DateRangePicker from "../../../../components/ui/form/RangeDatePicker"; // Corrigindo import para o componente que existe
 import { ColumnDef } from "@tanstack/react-table";
 import { BiSolidEdit } from "react-icons/bi";
 import { useMemo, useCallback } from "react";
@@ -13,18 +13,32 @@ import {
   DataTableHeader,
   Button,
 } from "../../../../components/index";
+import { toast } from "react-toastify";
+import { useForm } from "react-hook-form"; // Import necessário para o RangeDatePicker
 
 const EntryTable = () => {
   const { openModal, closeModal } = useModal();
-
   const { stockEntries, addStockEntry, updateStockEntry, deleteStockEntry } =
     useStockEntry();
+
+  // Adicionado o useForm para o control do DatePicker
+  const { control } = useForm();
+
+  // --- FUNÇÃO HELPER ADICIONADA ---
+  // Formata uma string com vírgula (ex: "1,2") para 3 casas decimais (ex: "1,200")
+  const formatDimension = (value: string): string => {
+    if (!value) return "0,000";
+    const numericValue = parseFloat(value.replace(",", ".")) || 0;
+    const fixedString = numericValue.toFixed(3);
+    return fixedString.replace(".", ",");
+  };
+  // --- FIM DA FUNÇÃO HELPER ---
 
   const handleCreateClick = () => {
     openModal("createStorage", EntryModal, {
       onClose: () => closeModal("createStorage"),
-      onSubmit: (data: any) => {
-        addStockEntry(data as Omit<EntryData, "id">);
+      onSubmit: (data: Omit<EntryData, "id">) => {
+        addStockEntry(data);
         closeModal("createStorage");
       },
     });
@@ -33,9 +47,9 @@ const EntryTable = () => {
   const handleEditEntry = useCallback(
     (entry: EntryData) => {
       openModal("editStorage", EntryModal, {
-        onClose: () => closeModal("editStorage"),
         entryToEdit: entry,
-        onUpdate: (id: any, data: any) => {
+        onClose: () => closeModal("editStorage"),
+        onUpdate: (id: number, data: Partial<EntryData>) => {
           updateStockEntry(id, data);
           closeModal("editStorage");
         },
@@ -46,131 +60,179 @@ const EntryTable = () => {
 
   const handleDeleteEntry = useCallback(
     (id: number) => {
-      if (confirm("Tem certeza que deseja excluir esta entrada?")) {
+      if (window.confirm("Tem certeza que deseja excluir esta entrada?")) {
         deleteStockEntry(id);
+        toast.success("Entrada deletada com sucesso!");
       }
     },
     [deleteStockEntry],
   );
 
-  const columns = useMemo(() => {
-    const baseColumns: ColumnDef<EntryData>[] = [
+  const columns = useMemo((): ColumnDef<EntryData>[] => {
+    return [
       {
         accessorKey: "codBar",
         header: "Cód. Barras",
-        cell: ({ row }) => <div>{row.original.codBar.label}</div>,
+        cell: ({ row }) => <div className="">{row.original.codBar.value}</div>,
       },
       {
         accessorKey: "cliente",
         header: "Cliente",
-        cell: ({ row }) => <div>{row.original.cliente.label}</div>,
+        cell: ({ row }) => (
+          <div className="text-right">{row.original.cliente.label}</div>
+        ),
       },
       {
         accessorKey: "fabricante",
         header: "Fabricante",
-        cell: ({ row }) => <div>{row.original.fabricante}</div>,
+        cell: ({ row }) => (
+          <div className="text-right">{row.original.fabricante}</div>
+        ),
       },
       {
         accessorKey: "modelo",
         header: "Modelo",
-        cell: ({ row }) => <div>{row.original.modelo}</div>,
-      },
-      {
-        accessorKey: "espessura",
-        header: "Espessura",
-        cell: ({ row }) => <div>{row.original.espessura}</div>,
+        cell: ({ row }) => (
+          <div className="text-right">{row.original.modelo}</div>
+        ),
       },
       {
         accessorKey: "formato",
         header: "Formato",
-        cell: ({ row }) => <div>{row.original.formato}</div>,
+        cell: ({ row }) => (
+          <div className="text-right">{row.original.formato}</div>
+        ),
       },
+      // --- MUDANÇA AQUI ---
       {
         accessorKey: "alturaChapa",
         header: "A. Chapa",
-        cell: ({ row }) => <div>{row.original.alturaChapa}</div>,
+        cell: ({ row }) => (
+          <div className="text-right">
+            {formatDimension(row.original.alturaChapa)}
+          </div>
+        ),
       },
+      // --- MUDANÇA AQUI ---
       {
         accessorKey: "larguraChapa",
         header: "L. Chapa",
-        cell: ({ row }) => <div>{row.original.larguraChapa}</div>,
+        cell: ({ row }) => (
+          <div className="text-right">
+            {formatDimension(row.original.larguraChapa)}
+          </div>
+        ),
       },
       {
         accessorKey: "quantidade",
-        header: "Q. Chapas",
-        cell: ({ row }) => <div>{row.original.quantidade}</div>,
+        header: "Qtd. Chapas",
+        cell: ({ row }) => (
+          <div className="text-right">{row.original.quantidade}</div>
+        ),
       },
       {
         accessorKey: "m2",
         header: "Total m²",
-        cell: ({ row }) => <div>{row.original.m2}</div>,
+        cell: ({ row }) => <div className="text-right">{row.original.m2}</div>,
+      },
+      {
+        accessorKey: "quantidadeCaixas",
+        header: "Qtd. Caixas",
+        cell: ({ row }) => (
+          <div className="text-right">{row.original.quantidadeCaixas}</div>
+        ),
       },
       {
         accessorKey: "numeroNF",
         header: "Nº NF",
-        cell: ({ row }) => <div>{row.original.numeroNF}</div>,
-      },
-      {
-        accessorKey: "quantidadeCaixas",
-        header: "Q. Caixas",
-        cell: ({ row }) => <div>{row.original.quantidadeCaixas}</div>,
+        cell: ({ row }) => (
+          <div className="text-right">{row.original.numeroNF}</div>
+        ),
       },
       {
         accessorKey: "valorNF",
         header: "Valor NF",
-        cell: ({ row }) => <div>{row.original.valorNF}</div>,
+        cell: ({ row }) => (
+          <div className="text-right">{row.original.valorNF}</div>
+        ),
       },
       {
         accessorKey: "dolar",
         header: "Dólar",
-        cell: ({ row }) => <div>{row.original.dolar}</div>,
+        cell: ({ row }) => (
+          <div className="text-right">{row.original.dolar}</div>
+        ),
       },
       {
         accessorKey: "unidade",
         header: "Unidade",
-        cell: ({ row }) => <div>{row.original.unidade.label}</div>,
+        cell: ({ row }) => (
+          <div className="text-right">{row.original.unidade.label}</div>
+        ),
+      },
+      {
+        accessorKey: "entryDate",
+        header: "Data Entrada",
+        cell: ({ row }) => {
+          const date = row.original.entryDate;
+          if (!date) return <div className="text-right"></div>;
+
+          const dateOnly = date.split("T")[0];
+          const [year, month, day] = dateOnly.split("-");
+          return <div className="text-right">{`${day}/${month}/${year}`}</div>;
+        },
+      },
+      {
+        id: "actions",
+        header: "Ações",
+
+        cell: ({ row }) => (
+          <div className="flex items-center justify-center gap-1">
+            <IconButton
+              icon={<BiSolidEdit size={18} />}
+              onClick={() => handleEditEntry(row.original)}
+            />
+            <IconButton
+              icon={<Trash size={18} />}
+              onClick={() => handleDeleteEntry(row.original.id)}
+            />
+          </div>
+        ),
       },
     ];
+  }, [handleDeleteEntry, handleEditEntry]); // A função helper é estável, não precisa ser dependência.
 
-    baseColumns.push({
-      id: "actions",
-      header: "Ações",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-1 justify-end">
-          <IconButton
-            icon={<BiSolidEdit size={18} />}
-            onClick={() => handleEditEntry(row.original)}
-          />
-          <IconButton
-            icon={<Trash size={18} />}
-            onClick={() => handleDeleteEntry(row.original.id)}
-          />
-        </div>
-      ),
-    });
-
-    return baseColumns;
-  }, [handleDeleteEntry, handleEditEntry]);
+  const filteredEntries = useMemo(() => {
+    return stockEntries.filter(
+      (entry) => entry.formato !== "Retalho" && entry.formato !== "Saída",
+    );
+  }, [stockEntries]);
 
   return (
     <>
       <DataTableHeader
         actions={[
-          <div className="flex items-center gap-6">
+          <div
+            className="flex items-center w-full justify-between"
+            key="actions"
+          >
             <Button onClick={handleCreateClick}>
               <div className="flex items-center justify-center gap-2">
                 <PiPlusBold />
-                <span>Criar Entrada</span>
+                <span>Cadastrar Entrada</span>
               </div>
             </Button>
-            <DateRangePicker />
           </div>,
         ]}
+        onSearchChange={() => {}}
+        searchPlaceholder="Buscar..."
+        onFilterClick={() => {}}
+        hasActiveFilters={false}
       />
       <DataTable
         columns={columns}
-        data={stockEntries}
-        rowCount={stockEntries.length}
+        data={filteredEntries}
+        rowCount={filteredEntries.length}
         pagination={{
           pageIndex: 0,
           pageSize: 10,

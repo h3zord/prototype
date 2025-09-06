@@ -23,6 +23,11 @@ const routeTitles: { [key: string]: string } = {
   "/purchaseorder": "Ordens de Compra",
   "/invoices": "Notas Fiscais",
   "/replacements": "Reposições",
+  "/storage/code": "Códigos de Barras",
+  "/storage/entry": "Movimentações de Entradas",
+  "/storage/exit": "Movimentações de Saídas",
+  "/storage/general": "Estoque Geral",
+  "/storage/third": "Estoque de Terceiros",
 };
 
 const getPageTitle = (pathname: string): string | null => {

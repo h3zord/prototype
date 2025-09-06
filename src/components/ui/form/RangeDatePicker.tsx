@@ -58,6 +58,12 @@ const RangeDatePicker: React.FC<RangeDatePickerProps> = ({
               className="bg-transparent outline-none border placeholder-gray-500 border-gray-300/[.30] hover:border-gray-400 p-2 rounded w-full h-10"
               calendarClassName="border-none rounded"
               placeholderText={placeholder ?? "Selecione um intervalo"}
+              // --- CORREÇÃO AQUI ---
+              // Adicione esta prop para garantir que o popup do calendário
+              // tenha um z-index alto e apareça sobre os outros elementos.
+              // Use qualquer valor de z-index do Tailwind (z-20, z-30, z-50, etc.)
+              popperClassName="z-50"
+              // --- FIM DA CORREÇÃO ---
             />
           )}
         />

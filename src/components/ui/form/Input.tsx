@@ -55,7 +55,7 @@ const Input = ({
             className={`bg-transparent outline-none border placeholder-gray-500 p-2 rounded h-10
              ${className} ${
                disabled
-                 ? "text-white/50 border-white/10 cursor-default"
+                 ? "text-white/70 border-white/10 cursor-default"
                  : "hover:border-[rgba(209,213,219,0.5)] border-gray-300/[.30]"
              }`}
           />

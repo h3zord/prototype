@@ -1,7 +1,7 @@
-import BarcodeScanner from "../BarcodeScanner";
-import { Plus, Minus, Scan } from "lucide-react";
-import { useState, useEffect } from "react";
-import { FormProvider, useForm, useFieldArray } from "react-hook-form";
+import DateInput from "../../../../../components/ui/form/DateInput";
+import { useState, useEffect, useMemo } from "react";
+import { FormProvider, useForm } from "react-hook-form";
+import { useStockEntry } from "../../../../../features/storage/entry/components/context/StockEntryContext";
 import {
   Modal,
   SelectField,
@@ -9,30 +9,43 @@ import {
   Button,
   FormSection,
 } from "../../../../../components/index";
+import { toast } from "react-toastify";
+
+// Interface para os dados do estoque agregado (copiada da GeneralTable)
+interface AggregatedEntry {
+  id: string;
+  codBar: { label: string; value: string };
+  fabricante: string;
+  modelo: string;
+  espessura: string;
+  formato: string;
+  alturaChapa: string;
+  larguraChapa: string;
+  unidade: { label: string; value: string };
+  totalM2: number;
+  totalQuantidadeChapas: number;
+}
 
 interface StockExitModalProps {
   onClose: () => void;
 }
 
-interface StockItem {
-  dataLcto: string;
-  unidade: string;
-  espessura: string;
-  tipoSaida: string;
-  qtdeChapa: number;
-  larguraChapa: string;
-  alturaChapa: string;
+interface Retalho {
+  id: string;
+  altura: string;
+  largura: string;
   m2: string;
-  apr: string;
-  larguraRetalho?: string;
-  alturaRetalho?: string;
-  m2Retalho?: string;
-  codigoBarrasRetalho?: string;
+  codigoBarras: string;
 }
 
 interface FormData {
+  codigoBarras: {
+    value: string;
+    label: string;
+    itemData: AggregatedEntry;
+  } | null;
   dataLcto: string;
-  unidade: string;
+  unidade: { value: string; label: string } | null;
   tipoSaida: string;
   espessura: string;
   qtdeChapa: number;
@@ -40,22 +53,28 @@ interface FormData {
   larguraChapa: string;
   m2: string;
   apr: string;
-  larguraRetalho: string;
-  alturaRetalho: string;
-  m2Retalho: string;
-  codigoBarrasRetalho: string;
-  additionalItems: StockItem[];
+  retalhos: Retalho[];
+  exitDate: any;
 }
 
+// Helper de Data para corrigir fuso horário
+const getLocalDateString = () => {
+  const today = new Date();
+  const timezoneOffsetMs = today.getTimezoneOffset() * 60000;
+  const correctedDate = new Date(today.getTime() - timezoneOffsetMs);
+  return correctedDate.toISOString().split("T")[0]; // Retorna YYYY-MM-DD
+};
+
 const ExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
+  const { stockEntries, handleStockExit } = useStockEntry();
+
   const methods = useForm<FormData>({
     defaultValues: {
+      codigoBarras: null,
+      unidade: null,
       qtdeChapa: 1,
-      additionalItems: [],
-      larguraRetalho: "",
-      alturaRetalho: "",
-      m2Retalho: "",
-      codigoBarrasRetalho: "",
+      retalhos: [],
+      exitDate: getLocalDateString(), // Usa o helper para a data local correta
     },
   });
 
@@ -68,527 +87,416 @@ const ExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
     formState: { errors },
   } = methods;
 
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "additionalItems",
-  });
-
   const [isLoading, setIsLoading] = useState(false);
   const [showRetalhoSection, setShowRetalhoSection] = useState(false);
-  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [selectedStockItem, setSelectedStockItem] =
+    useState<AggregatedEntry | null>(null);
 
-  const tipoSaida = watch("tipoSaida") as any;
-  const qtdeChapa = watch("qtdeChapa") as any;
+  const codigoBarras = watch("codigoBarras");
+  const qtdeChapa = watch("qtdeChapa");
   const larguraChapa = watch("larguraChapa");
   const alturaChapa = watch("alturaChapa");
-  const m2 = watch("m2");
+  const unidade = watch("unidade");
+  const retalhos = watch("retalhos");
 
   const unitOptions = [
-    { value: "1", label: "POA" },
-    { value: "2", label: "IND" },
-    { value: "3", label: "FRR" },
+    { value: "POA", label: "POA" },
+    { value: "IND", label: "IND" },
+    { value: "FRR", label: "FRR" },
   ];
 
-  const plateThicknessOptions = [
-    { value: "1", label: "1.14 - ESXR" },
-    { value: "2", label: "1.14 - NX" },
-    { value: "3", label: "1.16 - Base Alumínio" },
-    { value: "4", label: "1.70 - ESXR" },
-    { value: "5", label: "2.84 - DFS" },
-    { value: "6", label: "3.94 - TDR" },
-    { value: "7", label: "6.35 - DEC" },
-    { value: "8", label: "TIL" },
-  ];
-
-  const tipoSaidaOptions = [
-    { value: "1", label: "0,90 x 1,20" },
-    { value: "2", label: "1,067 x 1,524" },
-    { value: "3", label: "1,27 x 2,032" },
-    { value: "4", label: "Retalho" },
-    { value: "5", label: "0,61 x 0,762 - NX" },
-    { value: "6", label: "0,64 x 0,838 - TIL" },
-    { value: "7", label: "0,838 x 1,097 - TIL" },
-    { value: "8", label: "0,80 x 1,067 - NX" },
-    { value: "9", label: "0,865 x 1,060 - Base Alumínio" },
-    { value: "10", label: "1,067 x 1,270" },
-  ];
-
-  const extractDimensionsFromFormat = (formatLabel: string) => {
-    const dimensionRegex = /^(\d+,\d+|\d+\.?\d*)\s*x\s*(\d+,\d+|\d+\.?\d*)/;
-    const match = formatLabel.match(dimensionRegex);
-
-    console.log("Regex match:", match);
-
-    if (match) {
-      const height = parseFloat(match[1].replace(",", "."));
-      const width = parseFloat(match[2].replace(",", "."));
-
-      return { height, width };
-    }
-
-    return null;
+  const formatDimension = (value: string): string => {
+    if (!value) return "0,000";
+    const numericValue = parseFloat(value.replace(",", ".")) || 0;
+    const fixedString = numericValue.toFixed(3);
+    return fixedString.replace(".", ",");
   };
 
-  useEffect(() => {
-    if (tipoSaida) {
-      let selectedOption: any;
-      let formatValue: any;
+  const aggregatedStock = useMemo(() => {
+    const summary = new Map<string, AggregatedEntry>();
+    for (const entry of stockEntries) {
+      const key =
+        entry.formato === "Retalho"
+          ? `RETALHO-${entry.codBar.value}-${entry.unidade.value}`
+          : `${entry.codBar.value}-${entry.unidade.value}`;
 
-      if (typeof tipoSaida === "object" && tipoSaida.value) {
-        formatValue = tipoSaida.value;
-        selectedOption = tipoSaida;
+      if (!summary.has(key)) {
+        summary.set(key, {
+          id: key,
+          codBar: entry.codBar,
+          fabricante: entry.fabricante,
+          modelo: entry.modelo,
+          espessura: entry.espessura,
+          formato: entry.formato,
+          alturaChapa: entry.alturaChapa,
+          larguraChapa: entry.larguraChapa,
+          unidade: entry.unidade,
+          totalM2: 0,
+          totalQuantidadeChapas: 0,
+        });
+      }
+      const currentSummary = summary.get(key)!;
+      let chapasNestaEntrada = 0;
+      if (entry.formato !== "Retalho" && entry.formato !== "Saída") {
+        chapasNestaEntrada =
+          (Number(entry.quantidade) || 0) *
+          (Number(entry.quantidadeCaixas) || 0);
       } else {
-        formatValue = tipoSaida;
-        selectedOption = tipoSaidaOptions.find(
-          (option) => option.value === formatValue,
-        );
+        chapasNestaEntrada = Number(entry.quantidade) || 0;
       }
+      currentSummary.totalQuantidadeChapas += chapasNestaEntrada;
+    }
+    return Array.from(summary.values());
+  }, [stockEntries]);
 
-      if (selectedOption && selectedOption.label) {
-        const dimensions = extractDimensionsFromFormat(selectedOption.label);
+  const availableStockOptions = useMemo(() => {
+    return aggregatedStock
+      .filter((item) => item.totalQuantidadeChapas > 0)
+      .map((item) => {
+        const isScrap = item.formato === "Retalho";
 
-        if (dimensions) {
-          const heightBR = dimensions.height.toString().replace(".", ",");
-          const widthBR = dimensions.width.toString().replace(".", ",");
+        const label = isScrap
+          ? `${item.codBar.label} - Retalho (${formatDimension(item.alturaChapa)} x ${formatDimension(item.larguraChapa)}) - Saldo: ${item.totalQuantidadeChapas} - ${item.unidade.label}`
+          : `${item.codBar.label} - Saldo: ${item.totalQuantidadeChapas} - ${item.unidade.label}`;
 
-          setValue("alturaChapa", heightBR);
-          setValue("larguraChapa", widthBR);
+        return {
+          value: item.id,
+          label: label,
+          itemData: item,
+        };
+      });
+  }, [aggregatedStock, formatDimension]); // Adicionada dependência formatDimension
 
-          const quantity = parseFloat(qtdeChapa) || 1;
-          const m2Value = (
-            dimensions.height *
-            dimensions.width *
-            quantity
-          ).toFixed(3);
-          const m2BR = m2Value.replace(".", ",");
+  // --- MUDANÇA PRINCIPAL AQUI ---
+  // Efeito para definir o item selecionado E PREENCHER OS CAMPOS DE USO
+  useEffect(() => {
+    if (codigoBarras?.itemData) {
+      const stockItem = codigoBarras.itemData;
+      setSelectedStockItem(stockItem);
+      setValue("espessura", stockItem.espessura);
+      setValue("unidade", stockItem.unidade);
 
-          console.log("Setting M²:", m2BR);
-          setValue("m2", m2BR);
-        } else {
-          setValue("alturaChapa", "");
-          setValue("larguraChapa", "");
-          setValue("m2", "");
-        }
-      }
+      // Preenche automaticamente as dimensões "usadas" com as dimensões "reais" do item.
+      // O usuário ainda pode editar se quiser usar menos e gerar retalho.
+      setValue("alturaChapa", stockItem.alturaChapa);
+      setValue("larguraChapa", stockItem.larguraChapa);
     } else {
+      setSelectedStockItem(null);
+      // Limpa os campos se o item for desmarcado
       setValue("alturaChapa", "");
       setValue("larguraChapa", "");
-      setValue("m2", "");
     }
-  }, [tipoSaida, qtdeChapa, setValue]);
+  }, [codigoBarras, setValue]);
+  // --- FIM DA MUDANÇA ---
 
+  // Efeito para calcular m² usado
   useEffect(() => {
-    const quantity = parseFloat(qtdeChapa) || 0;
-    const height = parseFloat(alturaChapa?.toString().replace(",", ".")) || 0;
-    const width = parseFloat(larguraChapa?.toString().replace(",", ".")) || 0;
-
-    if (quantity > 0 && height > 0 && width > 0) {
-      const m2Value = (height * width * quantity).toFixed(3);
-      const m2BR = m2Value.replace(".", ",");
-      setValue("m2", m2BR);
-    }
-  }, [qtdeChapa, alturaChapa, larguraChapa, setValue]);
-
-  const generateBarcode = (): string => {
-    const timestamp = Date.now();
-    const random = Math.floor(Math.random() * 1000);
-    return `RTL${timestamp}${random}`;
-  };
-
-  const calculateRetalho = () => {
-    if (!larguraChapa || !alturaChapa || !m2) return;
-
-    const largura = parseFloat(larguraChapa.replace(",", "."));
-    const altura = parseFloat(alturaChapa.replace(",", "."));
-    const m2Usado = parseFloat(m2.replace(",", "."));
-
-    if (largura > 0 && altura > 0 && m2Usado > 0) {
-      const m2Total = largura * altura;
-      const m2Retalho = m2Total - m2Usado;
-
-      if (m2Retalho > 0.01) {
-        setShowRetalhoSection(true);
-
-        const larguraRetalho = largura;
-        const alturaRetalho = m2Retalho / largura;
-
-        setValue("larguraRetalho", larguraRetalho.toFixed(2).replace(".", ","));
-        setValue("alturaRetalho", alturaRetalho.toFixed(2).replace(".", ","));
-        setValue("m2Retalho", m2Retalho.toFixed(2).replace(".", ","));
-        setValue("codigoBarrasRetalho", generateBarcode());
-      } else {
-        setShowRetalhoSection(false);
-        setValue("larguraRetalho", "");
-        setValue("alturaRetalho", "");
-        setValue("m2Retalho", "");
-        setValue("codigoBarrasRetalho", "");
-      }
-    }
-  };
-
-  useEffect(() => {
-    calculateRetalho();
-  }, [larguraChapa, alturaChapa, m2]);
-
-  const handleBarcodeRead = (barcodeData: string) => {
-    const mockBarcodeData = {
-      largura: "1,25",
-      altura: "2,50",
-      espessura: "2",
-      unidade: "1",
-    };
-
-    setValue("larguraChapa", mockBarcodeData.largura);
-    setValue("alturaChapa", mockBarcodeData.altura);
-    setValue("espessura", mockBarcodeData.espessura);
-    setValue("unidade", mockBarcodeData.unidade);
-
-    const largura = parseFloat(mockBarcodeData.largura.replace(",", "."));
-    const altura = parseFloat(mockBarcodeData.altura.replace(",", "."));
-    const m2Value = (largura * altura).toFixed(2).replace(".", ",");
-    setValue("m2", m2Value);
-
-    alert(
-      `Código de barras lido com sucesso!\nCódigo: ${barcodeData}\nDados preenchidos automaticamente.`,
+    const altura = parseFloat(alturaChapa?.replace(",", ".")) || 0;
+    const largura = parseFloat(larguraChapa?.replace(",", ".")) || 0;
+    setValue(
+      "m2",
+      altura > 0 && largura > 0
+        ? (altura * largura).toFixed(3).replace(".", ",")
+        : "",
     );
-  };
+  }, [alturaChapa, larguraChapa, setValue]);
 
-  const openBarcodeScanner = () => {
-    setIsScannerOpen(true);
-  };
+  // Efeito para gerar retalhos
+  useEffect(() => {
+    if (!selectedStockItem || !larguraChapa || !alturaChapa || !qtdeChapa) {
+      setShowRetalhoSection(false);
+      setValue("retalhos", []);
+      return;
+    }
+    const alturaUsada = parseFloat(alturaChapa.replace(",", "."));
+    const larguraUsada = parseFloat(larguraChapa.replace(",", "."));
+    const alturaReal = parseFloat(
+      selectedStockItem.alturaChapa.replace(",", "."),
+    );
+    const larguraReal = parseFloat(
+      selectedStockItem.larguraChapa.replace(",", "."),
+    );
+    const quantidade = parseInt(String(qtdeChapa));
 
-  const closeBarcodeScanner = () => {
-    setIsScannerOpen(false);
-  };
+    if (alturaUsada > alturaReal || larguraUsada > larguraReal) {
+      setShowRetalhoSection(false);
+      setValue("retalhos", []);
+      return;
+    }
 
-  const addItem = () => {
-    const mainFormData = watch();
+    const sobraAltura = alturaReal - alturaUsada;
+    const sobraLargura = larguraReal - larguraUsada;
 
-    const newItem: StockItem = {
-      dataLcto: mainFormData.dataLcto || "",
-      unidade: mainFormData.unidade || "",
-      espessura: mainFormData.espessura || "",
-      tipoSaida: mainFormData.tipoSaida || "",
-      qtdeChapa: 1,
-      larguraChapa: mainFormData.larguraChapa || "",
-      alturaChapa: mainFormData.alturaChapa || "",
-      m2: mainFormData.m2 || "",
-      apr: mainFormData.apr || "",
-    };
+    // Se as dimensões usadas forem IDÊNTICAS às reais (sobra 0), não gera retalho.
+    // Só gera se houver sobra significativa.
+    if ((sobraAltura > 0.01 || sobraLargura > 0.01) && quantidade > 0) {
+      setShowRetalhoSection(true);
+      const sharedBarcode = `RTL${Date.now()}${Math.floor(Math.random() * 1000)}`;
+      const novosRetalhos: Retalho[] = Array.from(
+        { length: quantidade },
+        (_, i) => {
+          const alturaRetalho = sobraAltura > 0.01 ? sobraAltura : alturaReal;
+          const larguraRetalho =
+            sobraLargura > 0.01 ? sobraLargura : larguraReal;
+          return {
+            id: `retalho-${i}-${Date.now()}`,
+            altura: alturaRetalho.toFixed(3).replace(".", ","),
+            largura: larguraRetalho.toFixed(3).replace(".", ","),
+            m2: (alturaRetalho * larguraRetalho).toFixed(3).replace(".", ","),
+            codigoBarras: sharedBarcode,
+          };
+        },
+      );
+      setValue("retalhos", novosRetalhos);
+    } else {
+      setShowRetalhoSection(false);
+      setValue("retalhos", []);
+    }
+  }, [alturaChapa, larguraChapa, qtdeChapa, selectedStockItem, setValue]);
 
-    append(newItem);
-  };
-
+  // Função de Submit (permanece correta)
   const onSubmit = async (data: FormData) => {
     setIsLoading(true);
+    if (!selectedStockItem || !unidade?.value) {
+      alert("Item em estoque e unidade são obrigatórios!");
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      const retalhoData = showRetalhoSection
-        ? {
-            larguraRetalho: data.larguraRetalho,
-            alturaRetalho: data.alturaRetalho,
-            m2Retalho: data.m2Retalho,
-            codigoBarrasRetalho: data.codigoBarrasRetalho,
-          }
-        : null;
+      const exitEntry = {
+        codBar: selectedStockItem.codBar,
+        cliente: { label: "Saída", value: "exit" },
+        unidade: { label: unidade.label || "", value: unidade.value },
+        quantidadeCaixas: 0,
+        numeroNF: "SAIDA",
+        valorNF: "0",
+        dolar: "0",
+        fabricante: selectedStockItem.fabricante,
+        modelo: selectedStockItem.modelo,
+        espessura: selectedStockItem.espessura,
+        formato: selectedStockItem.formato === "Retalho" ? "Retalho" : "Saída",
+        alturaChapa: selectedStockItem.alturaChapa, // Dimensão REAL
+        larguraChapa: selectedStockItem.larguraChapa, // Dimensão REAL
+        quantidade: data.qtdeChapa,
+        m2: "0",
+        entryDate: data.exitDate,
+        apr: data.apr,
+        alturaUsada: data.alturaChapa, // Dimensão USADA
+        larguraUsada: data.larguraChapa, // Dimensão USADA
+      };
 
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const scrapEntries = data.retalhos.map((retalho) => ({
+        codBar: { label: retalho.codigoBarras, value: retalho.codigoBarras },
+        cliente: { label: "Retalho", value: "scrap" },
+        unidade: { label: unidade.label || "", value: unidade.value },
+        quantidadeCaixas: 1,
+        numeroNF: "RETALHO",
+        valorNF: "0",
+        dolar: "0",
+        fabricante: selectedStockItem.fabricante,
+        modelo: selectedStockItem.modelo,
+        espessura: selectedStockItem.espessura,
+        formato: "Retalho",
+        alturaChapa: retalho.altura,
+        larguraChapa: retalho.largura,
+        quantidade: 1,
+        m2: retalho.m2,
+        entryDate: data.exitDate,
+      }));
 
-      let message = "Dados salvos com sucesso!";
-      if (retalhoData) {
-        message += `\n\nRetalho catalogado com código: ${retalhoData.codigoBarrasRetalho}`;
-      }
+      handleStockExit({
+        exitEntry,
+        scrapEntries: scrapEntries.length > 0 ? scrapEntries : undefined,
+      });
+      toast.success("Saída registrada com sucesso!");
 
-      alert(message);
       onClose();
     } catch (error) {
-      console.error("Erro ao salvar:", error);
-      alert("Erro ao salvar os dados!");
+      console.error("Erro ao registrar saída:", error);
+      toast.warning("Erro ao criar saída!");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <>
-      <Modal title="Saída de Estoque" onClose={onClose} className="max-w-6xl">
-        <FormProvider {...methods}>
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className="flex flex-col space-y-8"
-          >
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={openBarcodeScanner}
-              className="flex items-center max-w-52 justify-end gap-2"
-            >
-              <div className="flex gap-2">
-                <Scan size={16} />
-                Ler Código de Barras do Retalho
-              </div>
-            </Button>
+    <Modal title="Saída de Estoque" onClose={onClose} className="max-w-6xl">
+      <FormProvider {...methods}>
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="flex flex-col space-y-8"
+        >
+          <FormSection title="Dados da Saída">
+            <SelectField
+              name="codigoBarras"
+              label="Item em estoque (chapa ou retalho)"
+              control={control}
+              options={availableStockOptions}
+              rules={{ required: "Item é obrigatório" }}
+            />
+            <SelectField
+              name="unidade"
+              label="Unidade"
+              control={control}
+              options={unitOptions}
+              rules={{ required: "Unidade é obrigatória" }}
+              disabled={!!selectedStockItem}
+            />
+            <DateInput
+              label="Data de saída:"
+              name="exitDate"
+              control={control}
+              allowPastDates
+              disabled={true}
+            />
+          </FormSection>
 
-            <FormSection title="Dados da Saída">
-              <SelectField
-                name="unit"
-                label="Código de barras"
-                control={control}
-                options={unitOptions}
-              />
+          {selectedStockItem && (
+            <FormSection title="Dados da Chapa Selecionada">
               <Input
-                label="Data LCTO"
-                type="date"
-                {...register("dataLcto", { required: "Data é obrigatória" })}
-                error={errors.dataLcto}
-              />
-              <SelectField
-                name="unidade"
-                label="Unidade"
-                control={control}
-                options={unitOptions}
-                error={errors.unidade}
-              />
-            </FormSection>
-
-            <FormSection title="Dados da caixa selecionada">
-              <SelectField
-                name="manufacturer"
                 label="Fabricante"
-                control={control}
-                options={unitOptions}
+                value={selectedStockItem.fabricante}
                 disabled
               />
-              <SelectField
-                name="manufacturer"
+              <Input
                 label="Espessura"
-                control={control}
-                options={unitOptions}
+                value={selectedStockItem.espessura}
                 disabled
               />
-              <SelectField
-                name="manufacturer"
-                label="Modelo"
-                control={control}
-                options={unitOptions}
-                disabled
-              />
-              <SelectField
-                name="manufacturer"
+              <Input label="Modelo" value={selectedStockItem.modelo} disabled />
+              <Input
                 label="Formato"
-                control={control}
-                options={unitOptions}
+                value={selectedStockItem.formato}
                 disabled
               />
-              <Input name="manufacturer" label="m2" disabled />
-
-              <Input name="manufacturer" label="Largura chapa" disabled />
-              <Input name="manufacturer" label="Altura chapa" disabled />
-            </FormSection>
-
-            <FormSection title="Dimensões e Quantidade">
               <Input
-                label="Qtde Chapas"
-                {...register("qtdeChapa", {
-                  required: "Quantidade é obrigatória",
-                  min: { value: 1, message: "Quantidade deve ser maior que 0" },
-                })}
-                error={errors.qtdeChapa}
+                label="Largura"
+                value={selectedStockItem.larguraChapa}
+                disabled
               />
               <Input
-                label="Altura Chapa"
-                {...register("alturaChapa", {
-                  required: "Altura é obrigatória",
-                })}
-                error={errors.alturaChapa}
-                endIcon={<span>m</span>}
+                label="Altura"
+                value={selectedStockItem.alturaChapa}
+                disabled
               />
               <Input
-                label="Largura Chapa"
-                {...register("larguraChapa", {
-                  required: "Largura é obrigatória",
-                })}
-                error={errors.larguraChapa}
-                endIcon={<span>m</span>}
-              />
-              <Input
-                label="M²"
-                {...register("m2", { required: "M² é obrigatório" })}
-                error={errors.m2}
-                endIcon={<span>m²</span>}
-              />
-              <Input
-                label="APR (%)"
-                {...register("apr", { required: "APR é obrigatório" })}
-                error={errors.apr}
-                endIcon={<span>%</span>}
+                label="Chapas em estoque"
+                value={selectedStockItem.totalQuantidadeChapas}
+                disabled
               />
             </FormSection>
+          )}
 
-            {showRetalhoSection && (
-              <FormSection title="Retalho Gerado">
-                <div className="col-span-full">
-                  <div className="bg-gray-700 border border-gray-200 rounded-lg p-4 mb-6">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h4 className="font-medium text-white">
-                        Retalho detectado - Entrada automática no estoque
-                      </h4>
-                    </div>
-                    <p className="text-sm text-gray-50">
-                      Foi detectado que haverá sobra de material. O retalho será
-                      automaticamente cadastrado no estoque com um código de
-                      barras para futura utilização.
-                    </p>
-                  </div>
-                </div>
+          <FormSection title="Quantidade de Saída e Dimensões Usadas">
+            <Input
+              label="Quantidade chapas/retalhos (a usar)"
+              type="number"
+              min={1}
+              max={selectedStockItem?.totalQuantidadeChapas}
+              {...register("qtdeChapa", {
+                required: "Quantidade é obrigatória",
+                valueAsNumber: true,
+                min: { value: 1, message: "A quantidade mínima é 1" },
+                max: {
+                  value: selectedStockItem?.totalQuantidadeChapas ?? Infinity,
+                  message: `Saldo insuficiente (Disponível: ${selectedStockItem?.totalQuantidadeChapas})`,
+                },
+              })}
+              error={errors.qtdeChapa}
+            />
+            <Input
+              label="Altura chapa (usada)"
+              {...register("alturaChapa", {
+                required: "Altura é obrigatória",
+                validate: (value) => {
+                  if (selectedStockItem) {
+                    const alturaUsada = parseFloat(value.replace(",", "."));
+                    const alturaReal = parseFloat(
+                      selectedStockItem.alturaChapa.replace(",", "."),
+                    );
+                    return (
+                      alturaUsada <= alturaReal ||
+                      "Altura usada maior que a real"
+                    );
+                  }
+                  return true;
+                },
+              })}
+              error={errors.alturaChapa}
+            />
+            <Input
+              label="Largura chapa (usada)"
+              {...register("larguraChapa", {
+                required: "Largura é obrigatória",
+                validate: (value) => {
+                  if (selectedStockItem) {
+                    const larguraUsada = parseFloat(value.replace(",", "."));
+                    const larguraReal = parseFloat(
+                      selectedStockItem.larguraChapa.replace(",", "."),
+                    );
+                    return (
+                      larguraUsada <= larguraReal ||
+                      "Largura usada maior que a real"
+                    );
+                  }
+                  return true;
+                },
+              })}
+              error={errors.larguraChapa}
+            />
+            <Input label="M² por chapa (usada)" {...register("m2")} disabled />
+            <Input label="Aproveitamento (%)" {...register("apr")} />
+          </FormSection>
 
-                <Input
-                  label="Largura do Retalho"
-                  {...register("larguraRetalho")}
-                  endIcon={<span>m</span>}
-                  readOnly
-                />
-                <Input
-                  label="Altura do Retalho"
-                  {...register("alturaRetalho")}
-                  endIcon={<span>m</span>}
-                  readOnly
-                />
-                <Input
-                  label="M² do Retalho"
-                  {...register("m2Retalho")}
-                  endIcon={<span>m²</span>}
-                  readOnly
-                />
+          {showRetalhoSection && retalhos.length > 0 && (
+            <FormSection title="Novos Retalhos Gerados">
+              <div className="col-span-full bg-yellow-600/20 border border-yellow-600 rounded-lg p-4 mb-4">
+                <h4 className="font-semibold text-yellow-200 text-xs">
+                  {retalhos.length} Retalho(s) serão adicionados ao estoque
+                  geral.
+                </h4>
+              </div>
 
-                <Input
-                  label="Código de Barras"
-                  {...register("codigoBarrasRetalho")}
-                  readOnly
-                />
-
-                <div className="col-span-2 mt-7">
-                  <div className="bg-gray-700 border border-gray-200 rounded-lg px-3 py-2">
-                    <p className="text-sm text-white">
-                      Este retalho será catalogado no estoque e poderá ser
-                      localizado futuramente através do código de barras gerado.
-                    </p>
-                  </div>
-                </div>
-              </FormSection>
-            )}
-
-            {fields.map((field, index) => (
               <div
-                key={field.id}
-                className="rounded-lg space-y-8 border border-gray-500 p-6"
+                key={retalhos[0].id}
+                className="col-span-full grid grid-cols-2 md:grid-cols-4 gap-4 border-t pt-4"
               >
-                <div className="">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-gray-800">
-                      Item Adicional #{index + 2}
-                    </h3>
-                    <Button
-                      type="button"
-                      variant="danger"
-                      onClick={() => remove(index)}
-                      className="flex items-center gap-2"
-                    >
-                      <div className="flex gap-2">
-                        <Minus size={16} />
-                        Remover Item
-                      </div>
-                    </Button>
-                  </div>
-                </div>
-
-                <FormSection title="Dimensões e Quantidade">
-                  <Input
-                    label="Qtde Chapas"
-                    {...register(`additionalItems.${index}.qtdeChapa`)}
-                  />
-                  <Input
-                    label="Altura Chapa"
-                    {...register(`additionalItems.${index}.alturaChapa`)}
-                    endIcon={<span>m</span>}
-                  />
-                  <Input
-                    label="Largura Chapa"
-                    {...register(`additionalItems.${index}.larguraChapa`)}
-                    endIcon={<span>m</span>}
-                  />
-                  <Input
-                    label="M²"
-                    {...register(`additionalItems.${index}.m2`)}
-                    endIcon={<span>m²</span>}
-                  />
-                  <Input
-                    label="APR (%)"
-                    {...register(`additionalItems.${index}.apr`)}
-                    endIcon={<span>%</span>}
-                  />
-                </FormSection>
-              </div>
-            ))}
-
-            <FormSection title="Ações">
-              <div className="col-span-3">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 rounded-lg border">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={addItem}
-                    className="flex justify-between items-center gap-2 text-nowrap"
-                  >
-                    <div className="flex gap-2">
-                      <Plus size={16} />
-                      Adicionar Item
-                    </div>
-                  </Button>
-
-                  <div className="text-sm space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Plus size={16} className="text-white flex-shrink-0" />
-                      <span>Adicione uma nova saída extra.</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Minus size={16} className="text-white flex-shrink-0" />
-                      <span>
-                        Use o botão "Remover Item" para excluir itens
-                        desnecessários
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {fields.length > 0 && (
-                  <div className="mt-4 p-3 rounded-lg">
-                    <p className="text-sm text-white">
-                      <strong>Total de itens:</strong> {fields.length + 1}
-                    </p>
-                  </div>
-                )}
+                <Input
+                  label={`Largura de cada retalho`}
+                  value={retalhos[0].largura}
+                  readOnly
+                />
+                <Input
+                  label={`Altura de cada retalho`}
+                  value={retalhos[0].altura}
+                  readOnly
+                />
+                <Input
+                  label={`M² de cada retalho`}
+                  value={retalhos[0].m2}
+                  readOnly
+                />
+                <Input
+                  label={`Código de barras`}
+                  value={retalhos[0].codigoBarras}
+                  readOnly
+                />
               </div>
             </FormSection>
+          )}
 
-            <div className="flex justify-end gap-2 pt-4">
-              <Button type="button" variant="secondary" onClick={onClose}>
-                Cancelar
-              </Button>
-              <Button type="submit" loading={isLoading} disabled={isLoading}>
-                {isLoading ? "Salvando..." : "Gravar Dados"}
-              </Button>
-            </div>
-          </form>
-        </FormProvider>
-      </Modal>
-
-      {/* Componente do Scanner de Código de Barras */}
-      <BarcodeScanner
-        isOpen={isScannerOpen}
-        onScan={handleBarcodeRead}
-        onClose={closeBarcodeScanner}
-      />
-    </>
+          <div className="flex justify-end gap-2 pt-4">
+            <Button type="button" variant="secondary" onClick={onClose}>
+              Cancelar
+            </Button>
+            <Button type="submit" loading={isLoading}>
+              {isLoading ? "Processando..." : "Cadastrar"}
+            </Button>
+          </div>
+        </form>
+      </FormProvider>
+    </Modal>
   );
 };
 

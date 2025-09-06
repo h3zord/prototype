@@ -1,20 +1,12 @@
 import DataTable from "../../../../components/ui/table/data-table/DataTable";
-import DateRangePicker from "../../../../features/dashboard/components/Filters/DateRangePicker";
 import { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
-import { useModal } from "../../../../hooks/useModal";
-import { PiPlusBold } from "react-icons/pi";
-import { DataTableHeader, Button } from "../../../../components/index";
-import EntryModal from "../../entry/components/modal/EntryModal";
-import {
-  EntryData,
-  useStockEntry,
-} from "../../entry/components/context/StockEntryContext";
+import { DataTableHeader } from "../../../../components/index";
+import { useStockEntry } from "../../entry/components/context/StockEntryContext";
 
-// Interface para os dados agregados
 interface AggregatedEntry {
-  id: number;
-  codBar: { label: string; value: number };
+  id: string;
+  codBar: { label: string; value: string };
   cliente: { label: string; value: string };
   fabricante: string;
   modelo: string;
@@ -29,20 +21,32 @@ interface AggregatedEntry {
 const ThirdTable = () => {
   const { stockEntries } = useStockEntry();
 
+  // --- FUNÇÃO HELPER ADICIONADA ---
+  // Formata uma string com vírgula (ex: "1,2") para 3 casas decimais (ex: "1,200")
+  const formatDimension = (value: string): string => {
+    if (!value) return "0,000";
+    const numericValue = parseFloat(value.replace(",", ".")) || 0;
+    const fixedString = numericValue.toFixed(3);
+    return fixedString.replace(".", ",");
+  };
+  // --- FIM DA FUNÇÃO HELPER ---
+
   const aggregatedData = useMemo(() => {
-    const summary = new Map<number, AggregatedEntry>();
+    const summary = new Map<string, AggregatedEntry>();
 
-    for (const entry of stockEntries) {
-      const key = entry.codBar.value;
+    const stockInputEntries = stockEntries.filter(
+      (entry) => entry.formato !== "Retalho" && entry.formato !== "Saída",
+    );
 
-      // ---- A CORREÇÃO ESTÁ AQUI ----
-      // 1. Pega o m² de uma caixa (que já é o total de chapas daquela caixa)
-      const m2PerBox = parseFloat(entry.m2.replace(",", ".")) || 0;
-      // 2. Pega a quantidade de caixas daquele lançamento
-      const numberOfBoxes = parseInt(entry.quantidadeCaixas, 10) || 0;
-      // 3. Calcula o subtotal de m² para ESTE lançamento
-      const totalM2ForThisEntry = m2PerBox * numberOfBoxes;
-      // ---- FIM DA CORREÇÃO ----
+    for (const entry of stockInputEntries) {
+      const key = `${entry.codBar.value}-${entry.cliente.value}`;
+
+      const altura = parseFloat(entry.alturaChapa.replace(",", ".")) || 0;
+      const largura = parseFloat(entry.larguraChapa.replace(",", ".")) || 0;
+      const chapas = Number(entry.quantidade) || 0;
+      const caixas = Number(entry.quantidadeCaixas) || 0;
+
+      const totalM2ForThisEntry = altura * largura * chapas * caixas;
 
       if (!summary.has(key)) {
         summary.set(key, {
@@ -61,39 +65,46 @@ const ThirdTable = () => {
       }
 
       const currentSummary = summary.get(key)!;
-      // 4. Soma o subtotal calculado ao saldo geral
       currentSummary.totalM2 += totalM2ForThisEntry;
     }
 
     return Array.from(summary.values());
   }, [stockEntries]);
 
-  const columns = useMemo(() => {
-    const baseColumns: ColumnDef<AggregatedEntry>[] = [
+  const columns = useMemo((): ColumnDef<AggregatedEntry>[] => {
+    return [
       {
         accessorKey: "codBar",
         header: "Cód. Barras",
-        cell: ({ row }) => <div>{row.original.codBar.label}</div>,
+        cell: ({ row }) => <div>{row.original.codBar.value}</div>,
       },
       {
         accessorKey: "cliente",
         header: "Cliente",
-        cell: ({ row }) => <div>{row.original.cliente.label}</div>,
+        cell: ({ row }) => (
+          <div className="text-right">{row.original.cliente.label}</div>
+        ),
       },
       {
         accessorKey: "fabricante",
         header: "Fabricante",
-        cell: ({ row }) => <div>{row.original.fabricante}</div>,
+        cell: ({ row }) => (
+          <div className="text-right">{row.original.fabricante}</div>
+        ),
       },
       {
         accessorKey: "modelo",
         header: "Modelo",
-        cell: ({ row }) => <div>{row.original.modelo}</div>,
+        cell: ({ row }) => (
+          <div className="text-right">{row.original.modelo}</div>
+        ),
       },
       {
         accessorKey: "espessura",
         header: "Espessura",
-        cell: ({ row }) => <div>{row.original.espessura}</div>,
+        cell: ({ row }) => (
+          <div className="text-right">{row.original.espessura}</div>
+        ),
       },
       {
         accessorKey: "formato",
@@ -102,25 +113,31 @@ const ThirdTable = () => {
           <div className="text-right">{row.original.formato}</div>
         ),
       },
+      // --- COLUNA ADICIONADA ---
       {
         accessorKey: "alturaChapa",
         header: "A. Chapa",
         cell: ({ row }) => (
-          <div className="text-right">{row.original.alturaChapa}</div>
+          <div className="text-right">
+            {formatDimension(row.original.alturaChapa)}
+          </div>
         ),
       },
+      // --- COLUNA ADICIONADA ---
       {
         accessorKey: "larguraChapa",
         header: "L. Chapa",
         cell: ({ row }) => (
-          <div className="text-right">{row.original.larguraChapa}</div>
+          <div className="text-right">
+            {formatDimension(row.original.larguraChapa)}
+          </div>
         ),
       },
       {
         accessorKey: "totalM2",
         header: "Saldo Total m²",
         cell: ({ row }) => (
-          <div className="text-right font-bold">
+          <div className="text-right">
             {row.original.totalM2.toFixed(3).replace(".", ",")}
           </div>
         ),
@@ -128,21 +145,29 @@ const ThirdTable = () => {
       {
         accessorKey: "unidade",
         header: "Unidade",
-        cell: ({ row }) => <div>{row.original.unidade.label}</div>,
+        cell: ({ row }) => (
+          <div className="text-right">{row.original.unidade.label}</div>
+        ),
       },
     ];
-
-    return baseColumns;
-  }, []);
+  }, []); // A função formatDimension é estável e não precisa ser dependência
 
   return (
     <>
       <DataTableHeader
         actions={[
-          <div className="flex items-center gap-6">
-            <DateRangePicker />
+          <div className="col-span-full bg-yellow-600/20 border border-yellow-600 rounded-lg p-2">
+            <h4 className="font-semibold text-yellow-200 text-xs">
+              Essa tabela exibirá o saldo dos clientes para cada matéria prima,
+              e estará vinculada às ordens de serviço, onde irá ocorrer a
+              redução do saldo de acordo com o serviço realizado.
+            </h4>
           </div>,
         ]}
+        onSearchChange={() => {}}
+        searchPlaceholder="Buscar..."
+        onFilterClick={() => {}}
+        hasActiveFilters={false}
       />
       <DataTable
         columns={columns}

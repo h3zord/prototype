@@ -19,7 +19,9 @@ const EnvironmentBanner = ({ onClose }: { onClose: () => void }) => {
   // Só mostra se for development ou preview
   if (
     !environment ||
-    (environment !== "development" && environment !== "preview")
+    (environment !== "development" &&
+      environment !== "preview" &&
+      environment !== "prototype")
   ) {
     return null;
   }
@@ -29,6 +31,13 @@ const EnvironmentBanner = ({ onClose }: { onClose: () => void }) => {
       return {
         label: "AMBIENTE DE DESENVOLVIMENTO",
         bgColor: "bg-orange-500",
+        textColor: "text-white",
+        icon: Code,
+      };
+    } else if (environment === "prototype") {
+      return {
+        label: "AMBIENTE DE PROTOTIPAGEM",
+        bgColor: "bg-yellow-600",
         textColor: "text-white",
         icon: Code,
       };
@@ -76,10 +85,13 @@ const LayoutContent = ({ children }: { children: JSX.Element }) => {
   };
 
   const environment = import.meta.env.VITE_ENVIRONMENT;
+
   const shouldShowBanner =
     showBanner &&
     environment &&
-    (environment === "development" || environment === "preview");
+    (environment === "development" ||
+      environment === "preview" ||
+      environment === "prototype");
   const topOffset = shouldShowBanner ? "pt-24" : "pt-16";
 
   return (

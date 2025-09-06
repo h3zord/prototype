@@ -1,8 +1,9 @@
+import DateInput from "../../../../../components/ui/form/DateInput";
 import Textarea from "../../../../../components/ui/form/Textarea";
 import { useMemo, useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import { Scan } from "lucide-react";
 import { BarCodeData, useBarCode } from "../../../code/context/CodeContext";
+import { toast } from "react-toastify";
 import { EntryData } from "../context/StockEntryContext";
 import {
   Modal,
@@ -25,69 +26,58 @@ const EntryModal: React.FC<EntryModalProps> = ({
   entryToEdit,
   onUpdate: onUpdateProp,
 }) => {
-  const methods = useForm<Omit<EntryData, "id">>();
+  const methods = useForm<Omit<EntryData, "id">>({
+    defaultValues: {
+      entryDate: new Date().toISOString(), // ✅ String ISO completa
+    },
+  });
 
   const { control, register, handleSubmit, watch, setValue } = methods;
-
   const isEditing = !!entryToEdit;
 
   const { barCodes } = useBarCode();
   const [isLoading, setIsLoading] = useState(false);
 
+  const formatDimension = (value: string): string => {
+    if (!value) return "0,000";
+    const numericValue = parseFloat(value.replace(",", ".")) || 0;
+    const fixedString = numericValue.toFixed(3);
+    return fixedString.replace(".", ",");
+  };
+
   const barCodeOptions = useMemo(() => {
     return barCodes.map((bc: BarCodeData) => ({
-      value: bc.id,
-      label: bc.codBar,
+      value: bc.codBar,
+      label: `${bc.codBar} - ${bc.fabricante} ${bc.modelo} ${bc.espessura} (${formatDimension(bc.alturaChapa)} x ${formatDimension(bc.larguraChapa)})`,
     }));
   }, [barCodes]);
 
   const companyOptions = [
-    { value: "1", label: "Adhesive Label" },
-    { value: "2", label: "Trombini" },
+    { value: "Trombini", label: "Trombini" },
+    { value: "Flexograv POA", label: "Flexograv POA" },
   ];
   const unitOptions = [
-    { value: "1", label: "POA" },
-    { value: "2", label: "FRR" },
+    { value: "POA", label: "POA" },
+    { value: "IND", label: "IND" },
+    { value: "FRR", label: "FRR" },
   ];
 
   useEffect(() => {
     if (isEditing && entryToEdit) {
-      setValue("quantidadeCaixas", entryToEdit.quantidadeCaixas);
-      setValue("numeroNF", entryToEdit.numeroNF);
-      setValue("valorNF", entryToEdit.valorNF);
-      setValue("dolar", entryToEdit.dolar);
-      setValue("fabricante", entryToEdit.fabricante);
-      setValue("modelo", entryToEdit.modelo);
-      setValue("espessura", entryToEdit.espessura);
-      setValue("formato", entryToEdit.formato);
-      setValue("alturaChapa", entryToEdit.alturaChapa);
-      setValue("larguraChapa", entryToEdit.larguraChapa);
-      setValue("quantidade", entryToEdit.quantidade);
-      setValue("m2", entryToEdit.m2);
-
-      setValue("codBar", entryToEdit.codBar);
-      setValue("cliente", entryToEdit.cliente);
-      setValue("unidade", entryToEdit.unidade);
-      setValue("observations", entryToEdit.observations);
+      Object.entries(entryToEdit).forEach(([key, value]) => {
+        setValue(key as any, value);
+      });
     }
   }, [isEditing, entryToEdit, setValue]);
 
   const selectedBarCode = watch("codBar");
 
   useEffect(() => {
-    if (!selectedBarCode || !selectedBarCode.value) {
-      setValue("fabricante", "");
-      setValue("modelo", "");
-      setValue("espessura", "");
-      setValue("formato", "");
-      setValue("alturaChapa", "");
-      setValue("larguraChapa", "");
-      setValue("quantidade", 0);
-      setValue("m2", "");
-      return;
-    }
+    if (!selectedBarCode?.value || isEditing) return;
 
-    const barCodeData = barCodes.find((bc) => bc.id === selectedBarCode.value);
+    const barCodeData = barCodes.find(
+      (bc) => bc.codBar === selectedBarCode.value,
+    );
     if (barCodeData) {
       setValue("fabricante", barCodeData.fabricante);
       setValue("modelo", barCodeData.modelo);
@@ -98,18 +88,22 @@ const EntryModal: React.FC<EntryModalProps> = ({
       setValue("quantidade", barCodeData.quantidade);
       setValue("m2", barCodeData.m2);
     }
-  }, [selectedBarCode, barCodes, setValue]);
+  }, [selectedBarCode, barCodes, setValue, isEditing]);
 
-  const handleFormSubmit = async (data: any) => {
+  const handleFormSubmit = async (data: Omit<EntryData, "id">) => {
     setIsLoading(true);
     try {
       if (isEditing && onUpdateProp && entryToEdit) {
         onUpdateProp(entryToEdit.id, data);
+        toast.success("Entrada atualizada com sucesso!");
       } else if (onSubmitProp) {
         onSubmitProp(data);
+        toast.success("Entrada registrada com sucesso!");
       }
+      onClose();
     } catch (error) {
       console.error("Erro ao submeter:", error);
+      toast.warning("Falha ao criar entrada!");
     } finally {
       setIsLoading(false);
     }
@@ -117,7 +111,7 @@ const EntryModal: React.FC<EntryModalProps> = ({
 
   return (
     <Modal
-      title={isEditing ? "Editar Entrada de Estoque" : "Inclusão de Estoque"}
+      title={isEditing ? "Editar Entrada de Estoque" : "Entrada de Estoque"}
       onClose={onClose}
       className="max-w-6xl"
     >
@@ -126,22 +120,17 @@ const EntryModal: React.FC<EntryModalProps> = ({
           onSubmit={handleSubmit(handleFormSubmit)}
           className="flex flex-col space-y-8"
         >
-          <Button
-            type="button"
-            variant="secondary"
-            className="flex items-center max-w-52 justify-end gap-2"
-          >
-            <div className="flex gap-2">
-              <Scan size={16} /> Ler Código de Barras do Retalho
-            </div>
-          </Button>
-
-          <FormSection title="Dados Gerais">
+          <FormSection title="Dados da Entrada">
             <SelectField
               name="codBar"
               label="Código de barras"
               control={control}
               options={barCodeOptions}
+            />
+            <Input
+              label="Quantidade de caixas"
+              {...register("quantidadeCaixas")}
+              type="number"
             />
             <SelectField
               name="cliente"
@@ -155,17 +144,22 @@ const EntryModal: React.FC<EntryModalProps> = ({
               control={control}
               options={unitOptions}
             />
-            <Input
-              label="Quantidade de caixas"
-              {...register("quantidadeCaixas")}
-              type="number"
+            <DateInput
+              label="Data de entrada:"
+              name="entryDate"
+              control={control}
+              allowPastDates
+              disabled={true}
             />
-            <Input label="Número Nota fiscal" {...register("numeroNF")} />
-            <Input label="Valor Nota fiscal" {...register("valorNF")} />
-            <Input label="Cotação do dolar" {...register("dolar")} />
           </FormSection>
 
-          <FormSection title="Dados da caixa selecionada">
+          <FormSection title="Dados Financeiros">
+            <Input label="Número nota fiscal" {...register("numeroNF")} />
+            <Input label="Valor nota fiscal" {...register("valorNF")} />
+            <Input label="Cotação do dólar" {...register("dolar")} />
+          </FormSection>
+
+          <FormSection title="Dados da Caixa">
             <Input {...register("fabricante")} label="Fabricante" disabled />
             <Input {...register("modelo")} label="Modelo" disabled />
             <Input {...register("espessura")} label="Espessura" disabled />
@@ -186,7 +180,7 @@ const EntryModal: React.FC<EntryModalProps> = ({
           </FormSection>
 
           <FormSection title="Observações">
-            <div className="col-span-3">
+            <div className="col-span-full">
               <Textarea
                 label=""
                 {...register("observations")}
@@ -203,8 +197,8 @@ const EntryModal: React.FC<EntryModalProps> = ({
               {isLoading
                 ? "Salvando..."
                 : isEditing
-                  ? "Atualizar Dados"
-                  : "Gravar Dados"}
+                  ? "Atualizar"
+                  : "Cadastrar"}
             </Button>
           </div>
         </form>

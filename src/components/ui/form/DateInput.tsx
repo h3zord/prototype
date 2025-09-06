@@ -15,6 +15,7 @@ interface DateInputProps {
   minDate?: Date;
   noMinDate?: boolean;
   allowPastDates?: boolean;
+  disabled?: boolean;
 }
 
 const DateInput: React.FC<DateInputProps> = ({
@@ -25,6 +26,7 @@ const DateInput: React.FC<DateInputProps> = ({
   minDate = addHours(new Date(), 5),
   noMinDate,
   allowPastDates = false,
+  disabled = false,
 }) => {
   const isWeekday = (date: Date) => !isWeekend(date);
 
@@ -53,9 +55,10 @@ const DateInput: React.FC<DateInputProps> = ({
               }
               filterDate={allowPastDates ? undefined : isWeekday}
               wrapperClassName="w-full"
-              className="bg-transparent outline-none border placeholder-gray-500 border-gray-300/[.30] hover:border-gray-400 p-2 rounded w-full h-10"
+              className="bg-transparent outline-none border placeholder-gray-500 border-gray-300/[.30] hover:border-gray-400 p-2 rounded w-full h-10 disabled:bg-gray-600 disabled:opacity-75 disabled:cursor-not-allowed"
               calendarClassName="border-none rounded"
               placeholderText="Selecione uma data"
+              disabled={disabled}
             />
           )}
         />

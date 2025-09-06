@@ -113,17 +113,17 @@ const ALL_INVOICE_LINKS: ServiceLink[] = [
 
 const ALL_STORAGE_LINKS: ServiceLink[] = [
   {
-    name: "Cód. de barras",
+    name: "Cód. de Barras",
     link: routes.CODE,
     route: "/storage/code",
   },
   {
-    name: "Ent. de Estoque",
+    name: "Mov. de Entrada",
     link: routes.ENTRY,
     route: "/storage/entry",
   },
   {
-    name: "Saí. de Estoque",
+    name: "Mov. de Saída",
     link: routes.EXIT,
     route: "/storage/exit",
   },
@@ -407,7 +407,7 @@ export default function Sidebar({
                 <div
                   className={`overflow-hidden transition-all duration-300 ${serviceOrderOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"}`}
                 >
-                  <div className="ml-8 mt-1 space-y-1">
+                  <div className="ml-4 mt-1 space-y-1">
                     {ALL_SERVICE_ORDER_LINKS.map(({ name, link }) => {
                       const isActive = location.pathname === link;
                       return (
@@ -486,7 +486,7 @@ export default function Sidebar({
                 <div
                   className={`overflow-hidden transition-all duration-300 ${financialOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"}`}
                 >
-                  <div className="ml-8 mt-1 space-y-1">
+                  <div className="ml-4 mt-1 space-y-1">
                     {ALL_INVOICE_LINKS.map(({ name, link }) => {
                       const isActive = location.pathname === link;
                       return (
@@ -544,7 +544,7 @@ export default function Sidebar({
                       )}
                     </div>
                     <span className="text-sm font-medium flex-1 text-left">
-                      Gravação
+                      Estoque
                     </span>
                     <MdOutlineKeyboardArrowDown
                       className={`transition-transform duration-200 ${storageOpen ? "rotate-180" : ""}`}
@@ -566,7 +566,7 @@ export default function Sidebar({
                 <div
                   className={`overflow-hidden transition-all duration-300 ${storageOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"}`}
                 >
-                  <div className="ml-8 mt-1 space-y-1">
+                  <div className="ml-4 mt-1 space-y-1">
                     {ALL_STORAGE_LINKS.map(({ name, link }) => {
                       const isActive = location.pathname === link;
                       return (
