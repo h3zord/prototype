@@ -1,5 +1,5 @@
-import DefaultPageContainer from "../../../../components/layout/DefaultPageContainer";
-import ExitTable from "./ExitTable";
+import DefaultPageContainer from "../../../components/layout/DefaultPageContainer";
+import ExitTable from "./components/ExitTable";
 
 const ExitPage = () => {
   return (

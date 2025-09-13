@@ -118,6 +118,11 @@ const ALL_STORAGE_LINKS: ServiceLink[] = [
     route: "/storage/code",
   },
   {
+    name: "Pré Entrada",
+    link: routes.PRE_ENTRY,
+    route: "/storage/pre-entry",
+  },
+  {
     name: "Mov. de Entrada",
     link: routes.ENTRY,
     route: "/storage/entry",

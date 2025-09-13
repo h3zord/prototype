@@ -1,7 +1,10 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import DateInput from "../../../../../components/ui/form/DateInput";
 import { useState, useEffect, useMemo } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import { useStockEntry } from "../../../../../features/storage/entry/components/context/StockEntryContext";
+import { useStockEntry } from "../../../entry/context/StockEntryContext";
+import { toast } from "react-toastify";
+import { AlertBox } from "../../../../../components/components/ui/AlertBox";
 import {
   Modal,
   SelectField,
@@ -9,7 +12,6 @@ import {
   Button,
   FormSection,
 } from "../../../../../components/index";
-import { toast } from "react-toastify";
 
 // Interface para os dados do estoque agregado (copiada da GeneralTable)
 interface AggregatedEntry {
@@ -24,6 +26,7 @@ interface AggregatedEntry {
   unidade: { label: string; value: string };
   totalM2: number;
   totalQuantidadeChapas: number;
+  originalSheetId?: string; // NOVO CAMPO
 }
 
 interface StockExitModalProps {
@@ -62,7 +65,7 @@ const getLocalDateString = () => {
   const today = new Date();
   const timezoneOffsetMs = today.getTimezoneOffset() * 60000;
   const correctedDate = new Date(today.getTime() - timezoneOffsetMs);
-  return correctedDate.toISOString().split("T")[0]; // Retorna YYYY-MM-DD
+  return correctedDate.toISOString().split("T")[0];
 };
 
 const ExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
@@ -74,7 +77,7 @@ const ExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
       unidade: null,
       qtdeChapa: 1,
       retalhos: [],
-      exitDate: getLocalDateString(), // Usa o helper para a data local correta
+      exitDate: getLocalDateString(),
     },
   });
 
@@ -116,8 +119,8 @@ const ExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
     const summary = new Map<string, AggregatedEntry>();
     for (const entry of stockEntries) {
       const key =
-        entry.formato === "Retalho"
-          ? `RETALHO-${entry.codBar.value}-${entry.unidade.value}`
+        entry.formato === "Retalho" || entry.isScrap
+          ? `RETALHO-${entry.codBar.value}-${entry.unidade.value}-${entry.alturaChapa}-${entry.larguraChapa}`
           : `${entry.codBar.value}-${entry.unidade.value}`;
 
       if (!summary.has(key)) {
@@ -127,17 +130,25 @@ const ExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
           fabricante: entry.fabricante,
           modelo: entry.modelo,
           espessura: entry.espessura,
-          formato: entry.formato,
+          formato:
+            entry.formato === "Retalho" || entry.isScrap
+              ? "Retalho"
+              : entry.formato,
           alturaChapa: entry.alturaChapa,
           larguraChapa: entry.larguraChapa,
           unidade: entry.unidade,
           totalM2: 0,
           totalQuantidadeChapas: 0,
+          originalSheetId: entry.originalSheetId, // INCLUÍDO
         });
       }
       const currentSummary = summary.get(key)!;
       let chapasNestaEntrada = 0;
-      if (entry.formato !== "Retalho" && entry.formato !== "Saída") {
+      if (
+        entry.formato !== "Retalho" &&
+        entry.formato !== "Saída" &&
+        !entry.isScrap
+      ) {
         chapasNestaEntrada =
           (Number(entry.quantidade) || 0) *
           (Number(entry.quantidadeCaixas) || 0);
@@ -165,9 +176,8 @@ const ExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
           itemData: item,
         };
       });
-  }, [aggregatedStock, formatDimension]); // Adicionada dependência formatDimension
+  }, [aggregatedStock, formatDimension]);
 
-  // --- MUDANÇA PRINCIPAL AQUI ---
   // Efeito para definir o item selecionado E PREENCHER OS CAMPOS DE USO
   useEffect(() => {
     if (codigoBarras?.itemData) {
@@ -175,19 +185,14 @@ const ExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
       setSelectedStockItem(stockItem);
       setValue("espessura", stockItem.espessura);
       setValue("unidade", stockItem.unidade);
-
-      // Preenche automaticamente as dimensões "usadas" com as dimensões "reais" do item.
-      // O usuário ainda pode editar se quiser usar menos e gerar retalho.
       setValue("alturaChapa", stockItem.alturaChapa);
       setValue("larguraChapa", stockItem.larguraChapa);
     } else {
       setSelectedStockItem(null);
-      // Limpa os campos se o item for desmarcado
       setValue("alturaChapa", "");
       setValue("larguraChapa", "");
     }
   }, [codigoBarras, setValue]);
-  // --- FIM DA MUDANÇA ---
 
   // Efeito para calcular m² usado
   useEffect(() => {
@@ -227,8 +232,6 @@ const ExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
     const sobraAltura = alturaReal - alturaUsada;
     const sobraLargura = larguraReal - larguraUsada;
 
-    // Se as dimensões usadas forem IDÊNTICAS às reais (sobra 0), não gera retalho.
-    // Só gera se houver sobra significativa.
     if ((sobraAltura > 0.01 || sobraLargura > 0.01) && quantidade > 0) {
       setShowRetalhoSection(true);
       const sharedBarcode = `RTL${Date.now()}${Math.floor(Math.random() * 1000)}`;
@@ -254,7 +257,7 @@ const ExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
     }
   }, [alturaChapa, larguraChapa, qtdeChapa, selectedStockItem, setValue]);
 
-  // Função de Submit (permanece correta)
+  // Função de Submit ATUALIZADA com rastreamento
   const onSubmit = async (data: FormData) => {
     setIsLoading(true);
     if (!selectedStockItem || !unidade?.value) {
@@ -284,6 +287,7 @@ const ExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
         apr: data.apr,
         alturaUsada: data.alturaChapa, // Dimensão USADA
         larguraUsada: data.larguraChapa, // Dimensão USADA
+        originalSheetId: selectedStockItem.originalSheetId, // ADICIONADO: mantém referência
       };
 
       const scrapEntries = data.retalhos.map((retalho) => ({
@@ -303,6 +307,8 @@ const ExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
         quantidade: 1,
         m2: retalho.m2,
         entryDate: data.exitDate,
+        isScrap: true, // ADICIONADO: marca como retalho
+        originalSheetId: selectedStockItem.originalSheetId, // ADICIONADO: referência à chapa original
       }));
 
       handleStockExit({
@@ -333,14 +339,12 @@ const ExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
               label="Item em estoque (chapa ou retalho)"
               control={control}
               options={availableStockOptions}
-              rules={{ required: "Item é obrigatório" }}
             />
             <SelectField
               name="unidade"
               label="Unidade"
               control={control}
               options={unitOptions}
-              rules={{ required: "Unidade é obrigatória" }}
               disabled={!!selectedStockItem}
             />
             <DateInput
@@ -451,11 +455,11 @@ const ExitModal: React.FC<StockExitModalProps> = ({ onClose }) => {
 
           {showRetalhoSection && retalhos.length > 0 && (
             <FormSection title="Novos Retalhos Gerados">
-              <div className="col-span-full bg-yellow-600/20 border border-yellow-600 rounded-lg p-4 mb-4">
-                <h4 className="font-semibold text-yellow-200 text-xs">
-                  {retalhos.length} Retalho(s) serão adicionados ao estoque
-                  geral.
-                </h4>
+              <div className="col-span-full">
+                <AlertBox
+                  text={`${retalhos.length} Retalho(s) serão adicionados ao estoque
+                  geral e associados à chapa original.`}
+                />
               </div>
 
               <div

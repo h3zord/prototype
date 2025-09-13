@@ -1,5 +1,5 @@
-import DefaultPageContainer from "../../../../components/layout/DefaultPageContainer";
-import CodeTable from "./CodeTable";
+import DefaultPageContainer from "../../../components/layout/DefaultPageContainer";
+import CodeTable from "./components/CodeTable";
 
 const CodePage = () => {
   return (

@@ -1,42 +1,58 @@
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, useState } from "react";
 import { ColumnDef, Row, flexRender } from "@tanstack/react-table";
-import EntryModal from "./modal/EntryModal";
 import DataTable from "../../../../components/ui/table/data-table/DataTable";
 import { BiSolidEdit } from "react-icons/bi";
 import { useModal } from "../../../../hooks/useModal";
-import { Trash } from "lucide-react";
-import { toast } from "react-toastify";
-import { EntryData, useStockEntry } from "../context/StockEntryContext";
+import { Trash, CheckCircle } from "lucide-react";
+import { useStockEntry } from "../../entry/context/StockEntryContext";
 import { PiPlusBold } from "react-icons/pi";
+import { toast } from "react-toastify";
+import { PreEntryData, usePreEntry } from "../context/PreEntryContext";
 import { AlertBox } from "../../../../components/components/ui/AlertBox";
 import {
   IconButton,
   DataTableHeader,
   Button,
 } from "../../../../components/index";
+import PreEntryModal from "./modal/PreEntryModal";
+import StatusFilterTabs from "./StatusFilterTabs"; // Ajuste o caminho se necessário
 import {
   TableCell,
   TableRow,
 } from "../../../../components/components/ui/table";
 
-const EntryTable = () => {
+const PreEntryTable = () => {
   const { openModal, closeModal } = useModal();
-  const { stockEntries, addStockEntry, updateStockEntry, deleteStockEntry } =
-    useStockEntry();
+  const {
+    preEntries,
+    addPreEntry,
+    updatePreEntry,
+    deletePreEntry,
+    approvePreEntry,
+  } = usePreEntry();
 
-  const filteredEntries = useMemo(() => {
-    return stockEntries.filter(
-      (entry) => entry.formato !== "Retalho" && entry.formato !== "Saída",
-    );
-  }, [stockEntries]);
+  const { addStockEntry } = useStockEntry();
 
-  // LÓGICA DO RODAPÉ ADICIONADA AQUI
+  // Estado para controlar o filtro de status selecionado
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "pending" | "approved"
+  >("all");
+
+  // Filtra as entradas com base na aba selecionada
+  const filteredPreEntries = useMemo(() => {
+    if (statusFilter === "all") {
+      return preEntries;
+    }
+    return preEntries.filter((entry) => entry.status === statusFilter);
+  }, [preEntries, statusFilter]);
+
+  // Calcula os totais e adiciona a linha de rodapé com base nos dados JÁ FILTRADOS
   const dataWithFooter = useMemo(() => {
-    if (filteredEntries.length === 0) {
+    if (filteredPreEntries.length === 0) {
       return [];
     }
 
-    const totals = filteredEntries.reduce(
+    const totals = filteredPreEntries.reduce(
       (acc, entry) => {
         acc.totalChapas += Number(entry.quantidade) || 0;
         acc.totalM2 += Number(String(entry.m2).replace(",", ".")) || 0;
@@ -67,8 +83,8 @@ const EntryTable = () => {
       }),
     };
 
-    return [...filteredEntries, footerRow];
-  }, [filteredEntries]);
+    return [...filteredPreEntries, footerRow];
+  }, [filteredPreEntries]);
 
   const formatDimension = (value: string): string => {
     if (!value) return "0,000";
@@ -78,40 +94,70 @@ const EntryTable = () => {
   };
 
   const handleCreateClick = () => {
-    openModal("createStorage", EntryModal, {
-      onClose: () => closeModal("createStorage"),
-      onSubmit: (data: Omit<EntryData, "id">) => {
-        addStockEntry(data);
-        closeModal("createStorage");
+    openModal("createPreEntry", PreEntryModal, {
+      mode: "create",
+      onClose: () => closeModal("createPreEntry"),
+      onSubmit: (data: Omit<PreEntryData, "id" | "status">) => {
+        addPreEntry(data);
+        closeModal("createPreEntry");
       },
     });
   };
 
   const handleEditEntry = useCallback(
-    (entry: EntryData) => {
-      openModal("editStorage", EntryModal, {
+    (entry: PreEntryData) => {
+      if (entry.status === "approved") {
+        toast.warning("Não é possível editar uma pré-entrada já aprovada!");
+        return;
+      }
+      openModal("editPreEntry", PreEntryModal, {
+        mode: "edit",
         entryToEdit: entry,
-        onClose: () => closeModal("editStorage"),
-        onUpdate: (id: number, data: Partial<EntryData>) => {
-          updateStockEntry(id, data);
-          closeModal("editStorage");
+        onClose: () => closeModal("editPreEntry"),
+        onUpdate: (id: number, data: Partial<PreEntryData>) => {
+          updatePreEntry(id, data);
+          closeModal("editPreEntry");
         },
       });
     },
-    [closeModal, openModal, updateStockEntry],
+    [closeModal, openModal, updatePreEntry],
   );
 
   const handleDeleteEntry = useCallback(
-    (id: number) => {
-      if (window.confirm("Tem certeza que deseja excluir esta entrada?")) {
-        deleteStockEntry(id);
-        toast.success("Entrada deletada com sucesso!");
+    (entry: PreEntryData) => {
+      if (entry.status === "approved") {
+        toast.warning("Não é possível excluir uma pré-entrada já aprovada!");
+        return;
+      }
+      if (window.confirm("Tem certeza que deseja excluir esta pré-entrada?")) {
+        deletePreEntry(entry.id);
+        toast.success("Pré-entrada deletada com sucesso!");
       }
     },
-    [deleteStockEntry],
+    [deletePreEntry],
   );
 
-  const columns = useMemo((): ColumnDef<EntryData>[] => {
+  const handleApprovalClick = useCallback(
+    (entry: PreEntryData) => {
+      if (entry.status === "approved") {
+        toast.info("Esta pré-entrada já foi aprovada!");
+        return;
+      }
+      openModal("approvePreEntry", PreEntryModal, {
+        entryToEdit: entry,
+        mode: "approve",
+        onClose: () => closeModal("approvePreEntry"),
+        onApprove: (entryData: any) => {
+          approvePreEntry(entry.id);
+          addStockEntry(entryData);
+          closeModal("approvePreEntry");
+        },
+      });
+    },
+    [closeModal, openModal, approvePreEntry, addStockEntry],
+  );
+
+  const columns = useMemo((): ColumnDef<PreEntryData>[] => {
     return [
       {
         accessorKey: "codBar",
@@ -210,6 +256,28 @@ const EntryTable = () => {
         ),
       },
       {
+        accessorKey: "purchaseDate",
+        header: "Data Compra",
+        cell: ({ row }) => {
+          const date = row.original.purchaseDate;
+          if (!date) return <div className="text-right"></div>;
+          const dateOnly = date.split("T")[0];
+          const [year, month, day] = dateOnly.split("-");
+          return <div className="text-right">{`${day}/${month}/${year}`}</div>;
+        },
+      },
+      {
+        accessorKey: "expectedArrivalDate",
+        header: "Data Recebimento",
+        cell: ({ row }) => {
+          const date = row.original.expectedArrivalDate;
+          if (!date) return <div className="text-right"></div>;
+          const dateOnly = date.split("T")[0];
+          const [year, month, day] = dateOnly.split("-");
+          return <div className="text-right">{`${day}/${month}/${year}`}</div>;
+        },
+      },
+      {
         accessorKey: "unidade",
         header: "Unidade",
         cell: ({ row }) => (
@@ -217,15 +285,22 @@ const EntryTable = () => {
         ),
       },
       {
-        accessorKey: "entryDate",
-        header: "Data Entrada",
-        cell: ({ row }) => {
-          const date = row.original.entryDate;
-          if (!date) return <div className="text-right"></div>;
-          const dateOnly = date.split("T")[0];
-          const [year, month, day] = dateOnly.split("-");
-          return <div className="text-right">{`${day}/${month}/${year}`}</div>;
-        },
+        accessorKey: "status",
+        header: "Status",
+        cell: ({ row }) => (
+          <div className="text-center">
+            {row.original.status === "approved" ? (
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-600/20 text-green-200 border border-green-600">
+                <CheckCircle size={12} className="mr-1" />
+                Aprovado
+              </span>
+            ) : (
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-600/20 text-yellow-200 border border-yellow-600">
+                Pendente
+              </span>
+            )}
+          </div>
+        ),
       },
       {
         id: "actions",
@@ -235,16 +310,43 @@ const EntryTable = () => {
             <IconButton
               icon={<BiSolidEdit size={18} />}
               onClick={() => handleEditEntry(row.original)}
+              disabled={row.original.status === "approved"}
+              title={
+                row.original.status === "approved"
+                  ? "Não é possível editar entrada aprovada"
+                  : "Editar"
+              }
+            />
+            <IconButton
+              icon={<CheckCircle size={18} />}
+              onClick={() => handleApprovalClick(row.original)}
+              disabled={row.original.status === "approved"}
+              title={
+                row.original.status === "approved"
+                  ? "Já aprovado"
+                  : "Confirmar recebimento"
+              }
+              // className={
+              //   row.original.status === "pending"
+              //     ? "text-green-400 hover:text-green-300"
+              //     : ""
+              // }
             />
             <IconButton
               icon={<Trash size={18} />}
-              onClick={() => handleDeleteEntry(row.original.id)}
+              onClick={() => handleDeleteEntry(row.original)}
+              disabled={row.original.status === "approved"}
+              title={
+                row.original.status === "approved"
+                  ? "Não é possível excluir entrada aprovada"
+                  : "Excluir"
+              }
             />
           </div>
         ),
       },
     ];
-  }, [handleDeleteEntry, handleEditEntry]);
+  }, [handleDeleteEntry, handleEditEntry, handleApprovalClick]);
 
   const customRowRender = useCallback((row: Row<any>) => {
     if (row.original.isFooter) {
@@ -267,10 +369,11 @@ const EntryTable = () => {
           <TableCell className="bg-gray-800 text-right text-[10px] px-1 py-2">
             {row.original.valorNF}
           </TableCell>
-          <TableCell colSpan={4} className="bg-gray-800 py-2"></TableCell>
+          <TableCell colSpan={6} className="bg-gray-800 py-2"></TableCell>
         </TableRow>
       );
     }
+
     const isEven = row.index % 2 === 0;
     const bgColor = isEven ? "bg-gray-600" : "bg-gray-700";
     const hoverColor = "hover:bg-gray-500";
@@ -299,22 +402,26 @@ const EntryTable = () => {
             <Button onClick={handleCreateClick}>
               <div className="flex items-center justify-center gap-2">
                 <PiPlusBold />
-                <span>Cadastrar Entrada</span>
+                <span>Cadastrar Pré-entrada</span>
               </div>
             </Button>
+            <StatusFilterTabs
+              currentFilter={statusFilter}
+              onFilterChange={setStatusFilter}
+            />
+            <AlertBox text="Pré-entradas são cadastros antecipados. O material só entra no estoque após a confirmação do recebimento." />
           </div>,
-          <AlertBox text="Movimentações de entrada irão incrementar no estoque geral e no estoque de terceiros." />,
         ]}
         onSearchChange={() => {}}
         searchPlaceholder="Buscar..."
         onFilterClick={() => {}}
         hasActiveFilters={false}
-      />
+      ></DataTableHeader>
       <DataTable
         columns={columns}
         data={dataWithFooter}
         customRowRender={customRowRender}
-        rowCount={filteredEntries.length}
+        rowCount={filteredPreEntries.length}
         pagination={{
           pageIndex: 0,
           pageSize: 10,
@@ -325,4 +432,4 @@ const EntryTable = () => {
   );
 };
 
-export default EntryTable;
+export default PreEntryTable;

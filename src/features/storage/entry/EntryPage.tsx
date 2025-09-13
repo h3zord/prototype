@@ -1,5 +1,5 @@
-import DefaultPageContainer from "../../../../components/layout/DefaultPageContainer";
-import EntryTable from "./EntryTable";
+import DefaultPageContainer from "../../../components/layout/DefaultPageContainer";
+import EntryTable from "./components/EntryTable";
 
 const EntryPage = () => {
   return (

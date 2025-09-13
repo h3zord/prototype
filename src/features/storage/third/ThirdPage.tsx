@@ -1,5 +1,5 @@
-import DefaultPageContainer from "../../../../components/layout/DefaultPageContainer";
-import ThirdTable from "./ThirdTable";
+import DefaultPageContainer from "../../../components/layout/DefaultPageContainer";
+import ThirdTable from "./components/ThirdTable";
 
 const ThirdPage = () => {
   return (

@@ -153,7 +153,7 @@ const CodeTable = () => {
             <Button onClick={handleCreateBarCodeClick}>
               <div className="flex items-center justify-center gap-2">
                 <PiPlusBold />
-                <span>Cadastrar Código de barras</span>
+                <span>Cadastrar Código de Barras</span>
               </div>
             </Button>
           </div>,

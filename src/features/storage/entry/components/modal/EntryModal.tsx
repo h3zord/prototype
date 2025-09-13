@@ -4,7 +4,7 @@ import { useMemo, useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { BarCodeData, useBarCode } from "../../../code/context/CodeContext";
 import { toast } from "react-toastify";
-import { EntryData } from "../context/StockEntryContext";
+import { EntryData } from "../../context/StockEntryContext";
 import {
   Modal,
   SelectField,

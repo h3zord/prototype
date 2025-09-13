@@ -27,6 +27,7 @@ enum routes {
   REPLACEMENTS = "/replacements",
   PERMISSIONS = "/permissions",
   DOCS = "/docs",
+  PRE_ENTRY = "/storage/pre-entry",
   ENTRY = "/storage/entry",
   EXIT = "/storage/exit",
   CODE = "/storage/code",

@@ -22,9 +22,13 @@ export interface EntryData {
   observations?: string;
   entryDate: any;
   apr?: string;
-  exitDate?: any; // <-- ADICIONE ESTA LINHA
-  alturaUsada?: string; // <-- ADICIONE ESTA LINHA
-  larguraUsada?: string; // <-- ADICIONE ESTA LINHA
+  exitDate?: any;
+  alturaUsada?: string;
+  larguraUsada?: string;
+  // NOVOS CAMPOS PARA RASTREAMENTO
+  parentId?: number; // ID da chapa original (para retalhos)
+  originalSheetId?: string; // ID único da chapa original para agrupamento
+  isScrap?: boolean; // Indica se é um retalho
 }
 
 // Interface para os dados que chegam do modal de saída
@@ -74,6 +78,10 @@ export const StockEntryProvider: React.FC<StockEntryProviderProps> = ({
     const newEntry: EntryData = {
       ...entry,
       id: Date.now(),
+      // Gera um ID único para a chapa original se não for retalho
+      originalSheetId: entry.isScrap
+        ? entry.originalSheetId
+        : `sheet-${Date.now()}`,
     };
     setStockEntries((currentData) => [...currentData, newEntry]);
   };
@@ -92,9 +100,19 @@ export const StockEntryProvider: React.FC<StockEntryProviderProps> = ({
     setStockEntries((prev) => prev.filter((entry) => entry.id !== id));
   };
 
-  // Função CORRIGIDA para registrar saídas e retalhos como novas transações
+  // Função ATUALIZADA para registrar saídas e retalhos com rastreamento
   const handleStockExit = (data: StockExitData) => {
     const newTransactions: EntryData[] = [];
+    const exitId = Date.now();
+
+    // Encontra a entrada original para obter o originalSheetId
+    const originalEntry = stockEntries.find(
+      (entry) =>
+        entry.codBar.value === data.exitEntry.codBar.value &&
+        entry.unidade.value === data.exitEntry.unidade.value,
+    );
+
+    const originalSheetId = originalEntry?.originalSheetId || `sheet-${exitId}`;
 
     // 1. Cria a transação de SAÍDA com quantidade e m² NEGATIVOS.
     const alturaSaida =
@@ -105,18 +123,22 @@ export const StockEntryProvider: React.FC<StockEntryProviderProps> = ({
 
     newTransactions.push({
       ...data.exitEntry,
-      id: Date.now(),
-      quantidade: -Math.abs(data.exitEntry.quantidade), // Garante que a quantidade é negativa
-      m2: (-Math.abs(m2TotalSaida)).toFixed(3).replace(".", ","), // Garante que o m² é negativo
-      quantidadeCaixas: 0, // Saídas não contam como caixas
+      id: exitId,
+      quantidade: -Math.abs(data.exitEntry.quantidade),
+      m2: (-Math.abs(m2TotalSaida)).toFixed(3).replace(".", ","),
+      quantidadeCaixas: 0,
+      originalSheetId, // Mantém a referência da chapa original
     });
 
-    // 2. Adiciona os retalhos como novas entradas (com valores positivos)
+    // 2. Adiciona os retalhos como novas entradas (com valores positivos) e referência ao pai
     if (data.scrapEntries && data.scrapEntries.length > 0) {
       data.scrapEntries.forEach((scrapEntry, index) => {
         newTransactions.push({
           ...scrapEntry,
-          id: Date.now() + index + 1,
+          id: exitId + index + 1,
+          isScrap: true, // Marca como retalho
+          parentId: exitId, // Referência à transação de saída
+          originalSheetId, // Mantém a referência da chapa original
         });
       });
     }

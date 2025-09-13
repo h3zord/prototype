@@ -1,5 +1,5 @@
-import DefaultPageContainer from "../../../../components/layout/DefaultPageContainer";
-import GeneralTable from "./GeneralTable";
+import DefaultPageContainer from "../../../components/layout/DefaultPageContainer";
+import GeneralTable from "./components/GeneralTable";
 
 const GeneralPage = () => {
   return (

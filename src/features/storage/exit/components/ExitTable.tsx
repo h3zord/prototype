@@ -1,40 +1,80 @@
+import React, { useMemo, useCallback } from "react";
+import { ColumnDef, Row, flexRender } from "@tanstack/react-table";
 import ExitModal from "./modal/ExitModal";
-import { useMemo } from "react";
-import { ColumnDef } from "@tanstack/react-table";
+import DataTable from "../../../../components/ui/table/data-table/DataTable";
 import { PiPlusBold } from "react-icons/pi";
+import { BiSolidEdit } from "react-icons/bi";
+import { Trash } from "lucide-react";
+import { AlertBox } from "../../../../components/components/ui/AlertBox";
+import { useModal } from "../../../../hooks/useModal";
 import {
   DataTableHeader,
   Button,
   IconButton,
 } from "../../../../components/index";
-import { useModal } from "../../../../hooks/useModal";
-import DataTable from "../../../../components/ui/table/data-table/DataTable";
-import { useForm } from "react-hook-form";
-
-// Importações do nosso contexto de estoque
 import {
   EntryData,
   useStockEntry,
-} from "../../entry/components/context/StockEntryContext";
-import { BiSolidEdit } from "react-icons/bi";
-import { Trash } from "lucide-react";
+} from "../../entry/context/StockEntryContext";
+import {
+  TableCell,
+  TableRow,
+} from "../../../../components/components/ui/table";
 
 const ExitTable = () => {
   const { openModal, closeModal } = useModal();
   const { stockEntries } = useStockEntry();
 
-  // Helper de formatação de dimensão
+  const exitData = useMemo(() => {
+    return stockEntries.filter((entry) => entry.quantidade < 0);
+  }, [stockEntries]);
+
+  // LÓGICA DO RODAPÉ ADICIONADA AQUI
+  const dataWithFooter = useMemo(() => {
+    if (exitData.length === 0) {
+      return [];
+    }
+
+    const totals = exitData.reduce(
+      (acc, entry) => {
+        // Soma a quantidade de chapas (usando o valor absoluto)
+        acc.totalChapas += Math.abs(entry.quantidade) || 0;
+
+        // Replica o cálculo de m² usado para cada linha
+        const alturaUsada = parseFloat(
+          entry.alturaUsada?.replace(",", ".") || "0",
+        );
+        const larguraUsada = parseFloat(
+          entry.larguraUsada?.replace(",", ".") || "0",
+        );
+        const quantidadeSaida = Math.abs(entry.quantidade) || 0;
+        const m2TotalUsado = alturaUsada * larguraUsada * quantidadeSaida;
+        acc.totalM2 += m2TotalUsado;
+
+        return acc;
+      },
+      { totalChapas: 0, totalM2: 0 },
+    );
+
+    const footerRow = {
+      id: "footer-totals",
+      isFooter: true,
+      quantidade: totals.totalChapas.toLocaleString("pt-BR"),
+      m2: totals.totalM2.toLocaleString("pt-BR", {
+        minimumFractionDigits: 3,
+        maximumFractionDigits: 3,
+      }),
+    };
+
+    return [...exitData, footerRow];
+  }, [exitData]);
+
   const formatDimension = (value: string): string => {
     if (!value) return "0,000";
     const numericValue = parseFloat(value.replace(",", ".")) || 0;
     const fixedString = numericValue.toFixed(3);
     return fixedString.replace(".", ",");
   };
-
-  // Filtra apenas as transações de saída (quantidade negativa)
-  const exitData = useMemo(() => {
-    return stockEntries.filter((entry) => entry.quantidade < 0);
-  }, [stockEntries]);
 
   const handleCreateClick = () => {
     openModal("createStorage", ExitModal, {
@@ -75,27 +115,22 @@ const ExitTable = () => {
         header: "Formato",
         cell: ({ row }) => {
           const isRetalho = row.original.formato === "Retalho";
-
           if (isRetalho) {
             return (
               <div className="text-right">
-                <span
-                  className={`px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 text-xs`}
-                >
+                <span className="px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 text-xs">
                   {row.original.formato}
                 </span>
               </div>
             );
           }
-
-          // Exibe as dimensões REAIS da chapa que foi consumida
           const altura = row.original.alturaChapa;
           const largura = row.original.larguraChapa;
           return <div className="text-right">{`${altura} x ${largura}`}</div>;
         },
       },
       {
-        accessorKey: "alturaUsada", // Campo que salvamos no Modal
+        accessorKey: "alturaUsada",
         header: "A. Chapa (Usado)",
         cell: ({ row }) => (
           <div className="text-right">
@@ -104,7 +139,7 @@ const ExitTable = () => {
         ),
       },
       {
-        accessorKey: "larguraUsada", // Campo que salvamos no Modal
+        accessorKey: "larguraUsada",
         header: "L. Chapa (Usado)",
         cell: ({ row }) => (
           <div className="text-right">
@@ -119,26 +154,18 @@ const ExitTable = () => {
           <div className="text-right">{Math.abs(row.original.quantidade)}</div>
         ),
       },
-
-      // --- MUDANÇA PRINCIPAL AQUI ---
       {
-        accessorKey: "m2", // Mantemos o accessorKey, mas não usamos o valor direto
-        header: "m² (Usado)", // Renomeado o header
+        accessorKey: "m2",
+        header: "m² (Usado)",
         cell: ({ row }) => {
-          // 1. Calcula o M² com base nas dimensões USADAS salvas na transação
           const alturaUsada = parseFloat(
             row.original.alturaUsada?.replace(",", ".") || "0",
           );
           const larguraUsada = parseFloat(
             row.original.larguraUsada?.replace(",", ".") || "0",
           );
-
-          // 2. Pega a quantidade (positiva) de peças que saíram
           const quantidadeSaida = Math.abs(row.original.quantidade) || 0;
-
-          // 3. Calcula o total de M² efetivamente USADO nessa transação
           const m2TotalUsado = alturaUsada * larguraUsada * quantidadeSaida;
-
           return (
             <div className="text-right">
               {m2TotalUsado.toFixed(3).replace(".", ",")}
@@ -146,8 +173,6 @@ const ExitTable = () => {
           );
         },
       },
-      // --- FIM DA MUDANÇA ---
-
       {
         accessorKey: "apr",
         header: "% Aprov.",
@@ -176,7 +201,6 @@ const ExitTable = () => {
       {
         id: "actions",
         header: "Ações",
-
         cell: () => (
           <div className="flex items-center justify-center gap-1">
             <IconButton
@@ -191,7 +215,46 @@ const ExitTable = () => {
         ),
       },
     ];
-  }, []); // formatDimension é estável
+  }, []);
+
+  const customRowRender = useCallback((row: Row<any>) => {
+    if (row.original.isFooter) {
+      return (
+        <TableRow className="font-bold text-white sticky bottom-0 z-10">
+          <TableCell className="bg-gray-800 text-left text-[10px] pl-2 pr-1 py-2">
+            Totais:
+          </TableCell>
+          <TableCell colSpan={6} className="bg-gray-800 py-2"></TableCell>
+          <TableCell className="bg-gray-800 text-right text-[10px] px-1 py-2">
+            {row.original.quantidade}
+          </TableCell>
+          <TableCell className="bg-gray-800 text-right text-[10px] px-1 py-2">
+            {row.original.m2}
+          </TableCell>
+          <TableCell colSpan={4} className="bg-gray-800 py-2"></TableCell>
+        </TableRow>
+      );
+    }
+
+    const isEven = row.index % 2 === 0;
+    const bgColor = isEven ? "bg-gray-600" : "bg-gray-700";
+    const hoverColor = "hover:bg-gray-500";
+    return (
+      <TableRow
+        key={row.id}
+        className={`${bgColor} ${hoverColor} text-white text-[10px] border-b-1 border-gray-100`}
+      >
+        {row.getVisibleCells().map((cell) => (
+          <TableCell
+            key={cell.id}
+            className={`px-1 first:pl-2 align-middle text-left text-[10px] break-words`}
+          >
+            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+          </TableCell>
+        ))}
+      </TableRow>
+    );
+  }, []);
 
   return (
     <>
@@ -204,11 +267,7 @@ const ExitTable = () => {
                 <span>Cadastrar Saída</span>
               </div>
             </Button>
-            <div className="bg-yellow-600/20 border border-yellow-600 rounded-lg p-2">
-              <h4 className="font-semibold text-yellow-200 text-xs">
-                Movimentações de saída irão reduzir do estoque geral.
-              </h4>
-            </div>
+            <AlertBox text="Movimentações de saída irão reduzir do estoque geral." />
           </div>,
         ]}
         onSearchChange={() => {}}
@@ -218,7 +277,8 @@ const ExitTable = () => {
       />
       <DataTable
         columns={columns}
-        data={exitData}
+        data={dataWithFooter}
+        customRowRender={customRowRender}
         rowCount={exitData.length}
         pagination={{
           pageIndex: 0,

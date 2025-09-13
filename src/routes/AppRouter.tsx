@@ -20,11 +20,12 @@ import InvoicedServiceOrdersPage from "../features/invoicedServiceOrder/componen
 import ReplacementsPage from "../features/replacements/components/ReplacementsPage";
 import PermissionsPage from "../features/permissions/permissionsPage";
 import ServiceOrderPage from "../features/serviceOrder/components/ServiceOrderPage";
-import EntryPage from "../features/storage/entry/components/EntryPage";
-import ExitPage from "../features/storage/exit/components/ExitPage";
-import CodePage from "../features/storage/code/components/CodePage";
-import GeneralPage from "../features/storage/general/components/GeneralPage";
-import ThirdPage from "../features/storage/third/components/ThirdPage";
+import PreEntryPage from "../features/storage/pre-entry/PreEntryPage";
+import EntryPage from "../features/storage/entry/EntryPage";
+import CodePage from "../features/storage/code/CodePage";
+import ExitPage from "../features/storage/exit/ExitPage";
+import GeneralPage from "../features/storage/general/GeneralPage";
+import ThirdPage from "../features/storage/third/ThirdPage";
 import { Navigate, Route, Routes } from "react-router-dom";
 
 function AppRouter() {
@@ -44,6 +45,7 @@ function AppRouter() {
         <Route path={routes.PERMISSIONS} element={<PermissionsPage />} />
         <Route path={routes.CODE} element={<CodePage />} />
         <Route path={routes.ENTRY} element={<EntryPage />} />
+        <Route path={routes.PRE_ENTRY} element={<PreEntryPage />} />
         <Route path={routes.EXIT} element={<ExitPage />} />
         <Route path={routes.GENERAL} element={<GeneralPage />} />
         <Route path={routes.THIRD} element={<ThirdPage />} />
