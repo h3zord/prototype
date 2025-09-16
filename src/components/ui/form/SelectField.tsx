@@ -21,6 +21,7 @@ interface SelectFieldProps {
   value?: OptionType | null;
   warning?: string;
   placeholder?: string;
+  controlHeight?: string | number;
 }
 
 const SelectField: React.FC<SelectFieldProps> = ({
@@ -34,6 +35,7 @@ const SelectField: React.FC<SelectFieldProps> = ({
   loading,
   warning,
   placeholder,
+  controlHeight = "2.5rem",
 }) => {
   return (
     <div>
@@ -54,7 +56,7 @@ const SelectField: React.FC<SelectFieldProps> = ({
               field.onChange(selectedOption || null);
               onChange?.(selectedOption as OptionType);
             }}
-            maxMenuHeight={220} // Altura máxima do menu em pixels
+            maxMenuHeight={220}
             isDisabled={disabled}
             value={field.value || null}
             isLoading={loading}
@@ -66,6 +68,8 @@ const SelectField: React.FC<SelectFieldProps> = ({
             classNamePrefix="react-select"
             className="rounded caret-white"
             noOptionsMessage={() => "Nenhuma opção encontrada"}
+            // 👇 1. Adicione esta prop para renderizar o menu em um portal
+            menuPortalTarget={document.body}
             formatOptionLabel={(option: OptionType) => (
               <div style={{ display: "flex", alignItems: "center" }}>
                 {option.icon && (
@@ -75,6 +79,11 @@ const SelectField: React.FC<SelectFieldProps> = ({
               </div>
             )}
             styles={{
+              // 👇 2. Adicione este estilo para o portal do menu
+              menuPortal: (base) => ({
+                ...base,
+                zIndex: 9999, // Um z-index alto para garantir que fique por cima
+              }),
               control: (base) => ({
                 ...base,
                 backgroundColor: disabled
@@ -85,10 +94,20 @@ const SelectField: React.FC<SelectFieldProps> = ({
                   : "rgba(209, 213, 219, 0.3)",
                 boxShadow: "none",
                 borderRadius: "0.25rem",
-                minHeight: "2.5rem",
+                minHeight: controlHeight,
+                height: controlHeight,
                 "&:hover": {
                   borderColor: "rgba(209, 213, 219, 0.5)",
                 },
+              }),
+              valueContainer: (base) => ({
+                ...base,
+                height: controlHeight,
+                padding: "0 8px",
+              }),
+              indicatorsContainer: (base) => ({
+                ...base,
+                height: controlHeight,
               }),
               menu: (base) => ({
                 ...base,
@@ -115,6 +134,7 @@ const SelectField: React.FC<SelectFieldProps> = ({
               input: (base) => ({
                 ...base,
                 color: "white",
+                margin: "0px",
               }),
               option: (base, { isFocused, isSelected }) => ({
                 ...base,
@@ -131,6 +151,7 @@ const SelectField: React.FC<SelectFieldProps> = ({
               placeholder: (base) => ({
                 ...base,
                 color: "rgb(131,132,137)",
+                margin: "0px",
               }),
               singleValue: (base) => ({
                 ...base,

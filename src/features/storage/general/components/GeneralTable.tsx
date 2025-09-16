@@ -1,15 +1,21 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useMemo, useState, useCallback } from "react";
+import DataTable from "../../../../components/ui/table/data-table/DataTable";
+import { useMemo, useState, useCallback } from "react";
+import { useForm } from "react-hook-form";
 import { ColumnDef, Row, flexRender } from "@tanstack/react-table";
+import { DataTableHeader, SelectField } from "../../../../components/index";
+import { useStockEntry } from "../../entry/context/StockEntryContext";
+import { ChevronDown, ChevronRight } from "lucide-react";
+import { AlertBox } from "../../../../components/components/ui/AlertBox";
 import {
   TableCell,
   TableRow,
 } from "../../../../components/components/ui/table";
-import DataTable from "../../../../components/ui/table/data-table/DataTable";
-import { DataTableHeader } from "../../../../components/index";
-import { useStockEntry } from "../../entry/context/StockEntryContext";
-import { ChevronDown, ChevronRight } from "lucide-react";
-import { AlertBox } from "../../../../components/components/ui/AlertBox";
+
+interface OptionType {
+  label: string;
+  value: string;
+}
 
 interface AggregatedEntry {
   id: string;
@@ -28,13 +34,29 @@ interface AggregatedEntry {
   parentId?: string;
   children?: AggregatedEntry[];
   level?: number;
-  isFooter?: boolean; // Adicionado para a linha de rodapé
+  isFooter?: boolean;
 }
 
 const GeneralTable = () => {
   const { stockEntries } = useStockEntry();
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [selectedUnit, setSelectedUnit] = useState<string>("ALL");
 
+  // 👇 3. Inicializar o react-hook-form para obter o 'control'
+  const { control } = useForm({
+    defaultValues: {
+      unidade: { value: "ALL", label: "Todas as Unidades" },
+    },
+  });
+
+  const unitOptions: OptionType[] = [
+    { value: "ALL", label: "Todas as Unidades" },
+    { value: "POA", label: "POA" },
+    { value: "IND", label: "IND" },
+    { value: "FRR", label: "FRR" },
+  ];
+
+  // ... (o resto da lógica como formatDimension, toggleRowExpansion, etc., permanece o mesmo) ...
   const formatDimension = (value: string): string => {
     if (!value) return "0,000";
     const numericValue = parseFloat(value.replace(",", ".")) || 0;
@@ -52,11 +74,17 @@ const GeneralTable = () => {
     setExpandedRows(newExpanded);
   };
 
+  // Nenhuma mudança necessária aqui
   const hierarchicalData = useMemo(() => {
+    const filteredEntries =
+      selectedUnit === "ALL"
+        ? stockEntries
+        : stockEntries.filter((entry) => entry.unidade.value === selectedUnit);
+    // ... resto da lógica de agregação ...
     const summary = new Map<string, AggregatedEntry>();
     const scrapsByOriginalSheet = new Map<string, AggregatedEntry[]>();
 
-    for (const entry of stockEntries) {
+    for (const entry of filteredEntries) {
       const key = entry.isScrap
         ? `SCRAP-${entry.originalSheetId}-${entry.alturaChapa}-${entry.larguraChapa}-${entry.unidade.value}`
         : `${entry.codBar.value}-${entry.unidade.value}`;
@@ -146,8 +174,9 @@ const GeneralTable = () => {
     hierarchicalResult.push(...orphanScraps);
 
     return hierarchicalResult;
-  }, [stockEntries]);
+  }, [stockEntries, selectedUnit]);
 
+  // ... (o resto dos hooks useMemo e useCallback permanecem os mesmos) ...
   const expandedData = useMemo(() => {
     const result: AggregatedEntry[] = [];
     hierarchicalData.forEach((item) => {
@@ -415,6 +444,19 @@ const GeneralTable = () => {
       <DataTableHeader
         actions={[
           <div className="flex items-center gap-2">
+            <div className="w-48">
+              <SelectField
+                name="unidade"
+                control={control}
+                options={unitOptions}
+                placeholder="Filtrar Unidade"
+                controlHeight="2rem"
+                onChange={(option) => {
+                  setSelectedUnit(option ? (option.value as string) : "ALL");
+                }}
+              />
+            </div>
+
             <button
               onClick={expandAll}
               disabled={
@@ -427,6 +469,7 @@ const GeneralTable = () => {
             >
               ⬇ Expandir Todas
             </button>
+
             <button
               onClick={collapseAll}
               disabled={expandedRows.size === 0}
