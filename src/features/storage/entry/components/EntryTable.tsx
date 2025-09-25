@@ -26,17 +26,12 @@ const EntryTable = () => {
 
   const filteredEntries = useMemo(() => {
     return stockEntries.filter(
-      (entry) => entry.formato !== "Retalho" && entry.formato !== "Saída",
+      (entry) => entry.formato !== "Retalho" && entry.formato !== "Saída"
     );
   }, [stockEntries]);
 
-  // LÓGICA DO RODAPÉ ADICIONADA AQUI
-  const dataWithFooter = useMemo(() => {
-    if (filteredEntries.length === 0) {
-      return [];
-    }
-
-    const totals = filteredEntries.reduce(
+  const totals = useMemo(() => {
+    return filteredEntries.reduce(
       (acc, entry) => {
         acc.totalChapas += Number(entry.quantidade) || 0;
         acc.totalM2 += Number(String(entry.m2).replace(",", ".")) || 0;
@@ -49,25 +44,8 @@ const EntryTable = () => {
         totalM2: 0,
         totalCaixas: 0,
         totalValorNF: 0,
-      },
+      }
     );
-
-    const footerRow = {
-      id: "footer-totals",
-      isFooter: true,
-      quantidade: totals.totalChapas.toLocaleString("pt-BR"),
-      m2: totals.totalM2.toLocaleString("pt-BR", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }),
-      quantidadeCaixas: totals.totalCaixas.toLocaleString("pt-BR"),
-      valorNF: totals.totalValorNF.toLocaleString("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-      }),
-    };
-
-    return [...filteredEntries, footerRow];
   }, [filteredEntries]);
 
   const formatDimension = (value: string): string => {
@@ -98,7 +76,7 @@ const EntryTable = () => {
         },
       });
     },
-    [closeModal, openModal, updateStockEntry],
+    [closeModal, openModal, updateStockEntry]
   );
 
   const handleDeleteEntry = useCallback(
@@ -108,7 +86,7 @@ const EntryTable = () => {
         toast.success("Entrada deletada com sucesso!");
       }
     },
-    [deleteStockEntry],
+    [deleteStockEntry]
   );
 
   const columns = useMemo((): ColumnDef<EntryData>[] => {
@@ -247,30 +225,6 @@ const EntryTable = () => {
   }, [handleDeleteEntry, handleEditEntry]);
 
   const customRowRender = useCallback((row: Row<any>) => {
-    if (row.original.isFooter) {
-      return (
-        <TableRow className="font-bold text-white sticky bottom-0 z-10">
-          <TableCell className="bg-gray-800 text-left text-[10px] pl-2 pr-1 py-2">
-            Totais:
-          </TableCell>
-          <TableCell colSpan={6} className="bg-gray-800 py-2"></TableCell>
-          <TableCell className="bg-gray-800 text-right text-[10px] px-1 py-2">
-            {row.original.quantidade}
-          </TableCell>
-          <TableCell className="bg-gray-800 text-right text-[10px] px-1 py-2">
-            {row.original.m2}
-          </TableCell>
-          <TableCell className="bg-gray-800 text-right text-[10px] px-1 py-2">
-            {row.original.quantidadeCaixas}
-          </TableCell>
-          <TableCell className="bg-gray-800 py-2"></TableCell>
-          <TableCell className="bg-gray-800 text-right text-[10px] px-1 py-2">
-            {row.original.valorNF}
-          </TableCell>
-          <TableCell colSpan={4} className="bg-gray-800 py-2"></TableCell>
-        </TableRow>
-      );
-    }
     const isEven = row.index % 2 === 0;
     const bgColor = isEven ? "bg-gray-600" : "bg-gray-700";
     const hoverColor = "hover:bg-gray-500";
@@ -291,6 +245,27 @@ const EntryTable = () => {
     );
   }, []);
 
+  // Mapa por ID da coluna -> conteúdo do rodapé
+  const footerByColumnId: Record<string, React.ReactNode> = useMemo(() => {
+    if (filteredEntries.length === 0) return {};
+    return {
+      // primeira coluna da tabela
+      codBar: <span className="font-bold">Totais:</span>,
+      // colunas de totais:
+      quantidade: totals.totalChapas.toLocaleString("pt-BR"),
+      m2: totals.totalM2.toLocaleString("pt-BR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
+      quantidadeCaixas: totals.totalCaixas.toLocaleString("pt-BR"),
+      valorNF: totals.totalValorNF.toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      }),
+      // as demais ficam vazias automaticamente
+    };
+  }, [filteredEntries.length, totals]);
+
   return (
     <>
       <DataTableHeader
@@ -310,16 +285,16 @@ const EntryTable = () => {
         onFilterClick={() => {}}
         hasActiveFilters={false}
       />
+
       <DataTable
         columns={columns}
-        data={dataWithFooter}
+        data={filteredEntries}
         customRowRender={customRowRender}
         rowCount={filteredEntries.length}
-        pagination={{
-          pageIndex: 0,
-          pageSize: 10,
-        }}
+        pagination={{ pageIndex: 0, pageSize: 10 }}
         setPagination={() => {}}
+        // >>> novo: informa o conteúdo por coluna para o rodapé fixo
+        footerByColumnId={footerByColumnId}
       />
     </>
   );
