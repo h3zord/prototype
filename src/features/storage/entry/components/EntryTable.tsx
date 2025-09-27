@@ -1,5 +1,11 @@
-import React, { useMemo, useCallback } from "react";
-import { ColumnDef, Row, flexRender } from "@tanstack/react-table";
+import React, { useMemo, useCallback, useState } from "react";
+import {
+  ColumnDef,
+  Row,
+  flexRender,
+  SortingState,
+  PaginationState,
+} from "@tanstack/react-table";
 import EntryModal from "./modal/EntryModal";
 import DataTable from "../../../../components/ui/table/data-table/DataTable";
 import { BiSolidEdit } from "react-icons/bi";
@@ -19,16 +25,32 @@ import {
   TableRow,
 } from "../../../../components/components/ui/table";
 
+// ---- RowShape precisa cumprir o contrato do DataTable (isHeader + id)
+type RowShape = EntryData & { isHeader: boolean };
+
 const EntryTable = () => {
   const { openModal, closeModal } = useModal();
   const { stockEntries, addStockEntry, updateStockEntry, deleteStockEntry } =
     useStockEntry();
+
+  // ---- Estados obrigatórios do DataTable (evita stubs que quebram tipagem)
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
 
   const filteredEntries = useMemo(() => {
     return stockEntries.filter(
       (entry) => entry.formato !== "Retalho" && entry.formato !== "Saída"
     );
   }, [stockEntries]);
+
+  // Data no formato aceito pelo DataTable (com isHeader)
+  const tableData: RowShape[] = useMemo(
+    () => filteredEntries.map((e) => ({ ...e, isHeader: false })),
+    [filteredEntries]
+  );
 
   const totals = useMemo(() => {
     return filteredEntries.reduce(
@@ -89,7 +111,8 @@ const EntryTable = () => {
     [deleteStockEntry]
   );
 
-  const columns = useMemo((): ColumnDef<EntryData>[] => {
+  // ---- Tipar as colunas com RowShape para casar com o DataTable
+  const columns = useMemo((): ColumnDef<RowShape>[] => {
     return [
       {
         accessorKey: "codBar",
@@ -216,7 +239,7 @@ const EntryTable = () => {
             />
             <IconButton
               icon={<Trash size={18} />}
-              onClick={() => handleDeleteEntry(row.original.id)}
+              onClick={() => handleDeleteEntry(Number(row.original.id))}
             />
           </div>
         ),
@@ -224,7 +247,8 @@ const EntryTable = () => {
     ];
   }, [handleDeleteEntry, handleEditEntry]);
 
-  const customRowRender = useCallback((row: Row<any>) => {
+  // ---- Render customizado da linha (tipado com RowShape)
+  const customRowRender = useCallback((row: Row<RowShape>) => {
     const isEven = row.index % 2 === 0;
     const bgColor = isEven ? "bg-gray-600" : "bg-gray-700";
     const hoverColor = "hover:bg-gray-500";
@@ -245,13 +269,11 @@ const EntryTable = () => {
     );
   }, []);
 
-  // Mapa por ID da coluna -> conteúdo do rodapé
+  // ---- Mapa por ID da coluna -> conteúdo do rodapé
   const footerByColumnId: Record<string, React.ReactNode> = useMemo(() => {
     if (filteredEntries.length === 0) return {};
     return {
-      // primeira coluna da tabela
       codBar: <span className="font-bold">Totais:</span>,
-      // colunas de totais:
       quantidade: totals.totalChapas.toLocaleString("pt-BR"),
       m2: totals.totalM2.toLocaleString("pt-BR", {
         minimumFractionDigits: 2,
@@ -262,7 +284,6 @@ const EntryTable = () => {
         style: "currency",
         currency: "BRL",
       }),
-      // as demais ficam vazias automaticamente
     };
   }, [filteredEntries.length, totals]);
 
@@ -286,14 +307,19 @@ const EntryTable = () => {
         hasActiveFilters={false}
       />
 
-      <DataTable
+      {/* ATENÇÃO: tipar o DataTable com <RowShape> para casar com as colunas e os dados */}
+      <DataTable<RowShape>
         columns={columns}
-        data={filteredEntries}
+        data={tableData}
         customRowRender={customRowRender}
-        rowCount={filteredEntries.length}
-        pagination={{ pageIndex: 0, pageSize: 10 }}
-        setPagination={() => {}}
-        // >>> novo: informa o conteúdo por coluna para o rodapé fixo
+        rowCount={tableData.length}
+        pagination={pagination}
+        sorting={sorting}
+        setSorting={setSorting}
+        setPagination={setPagination}
+        isLoading={false}
+        showAllOption
+        // Mantém o rodapé alinhado por coluna
         footerByColumnId={footerByColumnId}
       />
     </>
